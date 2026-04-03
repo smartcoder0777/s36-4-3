@@ -388,6 +388,8 @@ def classify_task_type(prompt: str) -> str:
         return "NEW_LOG_ADDED"
     if re.search(r"change\s+(user\s+)?name\s+to", t, re.IGNORECASE):
         return "CHANGE_USER_NAME"
+    if re.search(r"rename\s+the\s+document\s+to", t, re.IGNORECASE):
+        return "DOCUMENT_RENAMED"
     if re.search(r"show.*pending\s+events\s+on\s+the\s+calendar", t, re.IGNORECASE):
         return "VIEW_PENDING_EVENTS"
     if re.search(r"add\s+a\s+new\s+calendar\s+event\s+where", t, re.IGNORECASE):
@@ -535,6 +537,8 @@ def classify_task_type(prompt: str) -> str:
         return "NAVBAR_EXPERTS_CLICK"
     if re.search(r"favorite\s+expert|select\s+favorite\s+expert", t, re.IGNORECASE):
         return "FAVORITE_EXPERT_SELECTED"
+    if re.search(r"book\s+a\s+consultation", t, re.IGNORECASE):
+        return "BOOK_A_CONSULTATION"
     if re.search(r"add\s+a\s+skill\s+where\s+skill", t, re.IGNORECASE):
         return "ADD_SKILL"
     if re.search(r"submit\s+a\s+job\s+with\s+title", t, re.IGNORECASE):
@@ -636,6 +640,10 @@ def classify_task_type(prompt: str) -> str:
         return "RESERVATION_COMPLETE"
     if re.search(r"search\s+for\s+products?\s+where\s+the\s+query", t, re.IGNORECASE):
         return "SEARCH_PRODUCT"
+    if re.search(r"favorite\s+the\s+subnet", t, re.IGNORECASE):
+        return "FAVORITE_SUBNET"
+    if re.search(r"remove\s+the\s+book.*from\s+the\s+shopping\s+cart", t, re.IGNORECASE):
+        return "REMOVE_FROM_CART_BOOK"
 
     # ---- Generic fallbacks ----
     if re.search(r"\b(register|sign.?up|create.*account|fill.*registration)\b", t):
@@ -685,6 +693,11 @@ def classify_shortcut_type(prompt: str) -> str | None:
         return "logout"
     if any(k in lower for k in ("log in", "login", "sign in")):
         return "login"
-    if "contact" in lower and any(k in lower for k in ("form", "message", "fill", "support", "submit", "expert")):
+    # Contact shortcuts use generic filler values; avoid when strict constraints are present.
+    if (
+        "contact" in lower
+        and any(k in lower for k in ("form", "message", "fill", "support", "submit", "expert"))
+        and not re.search(r"\b(name|email|subject|message)\b.*\b(equals|contains|not)\b", lower)
+    ):
         return "contact"
     return None

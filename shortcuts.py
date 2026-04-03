@@ -123,8 +123,15 @@ def try_quick_click(prompt: str, url: str, seed: str | None, step: int) -> list[
             return _click("href", f"/hire-later?seed={seed}") if seed else None
         if re.search(r"hires.*navbar|navbar.*hires", t):
             return _click("href", f"/hires?seed={seed}") if seed else None
-        if "book a consultation" in t or "consultation" in t:
-            return _click_xpath("//*[contains(@id, 'book-consultation-button')]")
+        if re.search(r"book\s+a\s+consultation", t):
+            m_name = re.search(r"name\s+equals\s+['\"]([^'\"]+)['\"]", prompt, re.IGNORECASE)
+            if m_name and step == 0:
+                return [{"type": "TypeAction", "text": m_name.group(1).strip(), "selector": _sel_attr("id", "input")}]
+            if step <= 1:
+                return _click_xpath(
+                    "//*[contains(@id, 'book-consultation-button') or contains(., 'Book a consultation')]"
+                )
+            return None
 
     # About page (autodining 8003)
     if port == 8003 and re.search(r"about\s+page|navigate.*about.*information", t):
@@ -342,6 +349,35 @@ def try_quick_click(prompt: str, url: str, seed: str | None, step: int) -> list[
             )
         if step == 1:
             return _click_xpath("//*[contains(.,'Delete Server') or contains(@id,'delete-server')]")
+        return None
+
+    # Favorite subnet (autostats 8014)
+    if port == 8014 and re.search(r"favorite\s+the\s+subnet", t):
+        m_name = re.search(r"named\s+['\"]([^'\"]+)['\"]", prompt, re.IGNORECASE)
+        if m_name and step == 0:
+            sn = m_name.group(1).strip()
+            return _click_xpath(f"//*[contains(., '{sn}')]")
+        return _click_xpath(
+            "//*[contains(@id,'favorite') or contains(@aria-label,'favorite') or contains(., 'Favorite')]"
+        )
+
+    # Rename document (autocrm 8004)
+    if port == 8004 and re.search(r"rename\s+the\s+document\s+to", t):
+        m_new = re.search(r"rename\s+the\s+document\s+to\s+['\"]([^'\"]+)['\"]", prompt, re.IGNORECASE)
+        if step == 0:
+            return _click_xpath("//*[contains(@id,'documents') or contains(@href,'documents') or contains(.,'Documents')]")
+        if step == 1:
+            return _click_xpath("//*[contains(@id,'rename') or contains(.,'Rename') or contains(@aria-label,'Rename')]")
+        if step == 2 and m_new:
+            return [
+                {
+                    "type": "TypeAction",
+                    "text": m_new.group(1).strip(),
+                    "selector": {"type": "xpathSelector", "value": "//input[contains(@id,'name') or contains(@placeholder,'name') or contains(@placeholder,'document')]"},
+                }
+            ]
+        if step == 3:
+            return _click_xpath("//*[contains(@id,'save') or contains(.,'Save') or contains(.,'Confirm')]")
         return None
 
     return None

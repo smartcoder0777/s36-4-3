@@ -59,6 +59,7 @@ EVENT_TASK_ALIASES: dict[str, str] = {
     "SEARCH": "SEARCH_RIDE",
     "ADD_TO_WISHLIST": "ADD_TO_WISHLIST_HOTEL",
     "UNHIDE_POST": "VIEW_HIDDEN_POSTS",
+    "REMOVE_FROM_CART_BOOK": "REMOVE_FROM_CART",
 }
 
 # ---------------------------------------------------------------------------
@@ -443,6 +444,7 @@ TASK_PLAYBOOKS: dict[str, str] = {
     "QUICK_ORDER_STARTED": "PLAYBOOK: 1) Find Quick Order button on any restaurant card. 2) Click it.",
     "FAQ_OPENED": "PLAYBOOK: 1) Navigate to FAQ page. 2) Find FAQ item matching constraint. 3) Click to expand.",
     "MESSAGE_HOST": "PLAYBOOK: 1) Find hotel matching ALL constraints. 2) Click to open. 3) Find Message Host button. 4) Type message. 5) Send.",
+    "BOOK_A_CONSULTATION": "PLAYBOOK: 1) Go to Experts/Browse. 2) Find expert matching constraints (name/rating/jobs/rate). 3) Open the expert card/profile. 4) Click Book a consultation.",
     "EDIT_CHECK_IN_OUT_DATES": "PLAYBOOK: 1) Find listing matching constraints. 2) Open booking form. 3) Modify dates. 4) Save.",
     "WISHLIST_OPENED": "PLAYBOOK: 1) Find Wishlist/Saved Hotels icon. 2) Click to open.",
     "REMOVE_FROM_WISHLIST": "PLAYBOOK: 1) Open wishlist. 2) Find listing matching constraints. 3) Click Remove.",
@@ -481,6 +483,9 @@ TASK_PLAYBOOKS: dict[str, str] = {
     "EDIT_CART_ITEM": "PLAYBOOK: 1) Navigate to Cart. 2) Find item matching constraints. 3) Click Edit.",
     "DELETE_MATTER": "PLAYBOOK: 1) Navigate to Matters. 2) Find matter matching constraints. 3) Click Delete. 4) Confirm.",
     "CREATE_LABEL": "PLAYBOOK: 1) Find Labels section. 2) Click + or Create Label. 3) Type name satisfying constraints. 4) Save.",
+    "REMOVE_FROM_CART_BOOK": "PLAYBOOK: 1) Login first using TASK_CREDENTIALS. 2) Open shopping cart. 3) Find the book matching constraints (name/year/price). 4) Click Remove/Delete from cart.",
+    "DOCUMENT_RENAMED": "PLAYBOOK: 1) Open Documents section. 2) Select a document row. 3) Click Rename/Edit name action. 4) Type the exact new_name value from constraints. 5) Save/confirm rename.",
+    "FAVORITE_SUBNET": "PLAYBOOK: 1) Go to Subnets list. 2) Find subnet matching provided subnet_id or subnet name. 3) Click favorite/star/heart toggle for that subnet.",
     "DELETE_TASK": "PLAYBOOK: 1) Navigate to task list. 2) Find task matching ALL constraints. 3) Click Delete. 4) Confirm.",
     "CREATE_TASK": "PLAYBOOK: 1) Find New Task/Add Task button. 2) Fill fields with EXACT values. 3) Save/Submit.",
     "EDIT_TASK": "PLAYBOOK: 1) Find task matching constraints. 2) Click Edit. 3) Update fields. 4) Save.",
