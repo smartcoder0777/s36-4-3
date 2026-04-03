@@ -91,7 +91,9 @@ WEBSITE_HINTS: dict[str, str] = {
     "autocrm": (
         "SITE: Legal case management + calendar. NAV: Dashboard, Matters, Clients, Calendar. "
         "Matters list: sortable columns. Add New Matter button. "
-        "Clients list: Add New Client button (name, email, status, matters). "
+        "Clients list: rows show name, email, status, matters, last activity; click a row to open client detail. "
+        "DELETE CLIENT: open Clients, find the row matching ALL TASK_CONSTRAINTS (not_contains/not_equals on name/email/etc.), "
+        "open that client, then click Delete client (id often delete-client-button) and confirm—DELETE_CLIENT event must fire. "
         "Calendar: Add event button, date/time/label/event_type fields. "
         "Settings: Change user name option. "
         "Sort by column: click column header or sort button."
@@ -129,7 +131,8 @@ WEBSITE_HINTS: dict[str, str] = {
         "Do NOT click travelers-count before booking. "
         "Payment methods: cash_on_arrival, credit_card, bank_transfer. "
         "Search bar id=submit-query. property-card-link opens listing detail. "
-        "Filters: rating, region/country, price range. "
+        "Filters bar below search: rating-filter and region-filter dropdowns, then Apply—this fires APPLY_FILTERS. "
+        "Set region and rating per TASK, then click Apply (not only Search). "
         "Review form: rating stars + text area."
     ),
     "autoconnect": (
@@ -157,7 +160,7 @@ WEBSITE_HINTS: dict[str, str] = {
     "autocalendar": (
         "SITE: Calendar app (Google Calendar-style). "
         "View buttons: Day, 5-day (work week), Week, Month -- click to switch view. "
-        "Left sidebar: list of calendars with + button to add new calendar. "
+        "Left sidebar: + button with aria-label 'Add new calendar' opens ADD_NEW_CALENDAR modal (not the same as Create new event). "
         "Add New Calendar modal: name + description fields. "
         "Events: click on time slot or + button to add event. "
         "Event form: title, date, time, visibility (Public/Private/Default), reminders (minutes), "
@@ -265,7 +268,7 @@ TASK_PLAYBOOKS: dict[str, str] = {
     "SELECT_MONTH": "PLAYBOOK: 1) Find view buttons. 2) Click Month button.",
     "SELECT_DAY": "PLAYBOOK: 1) Find view buttons. 2) Click Day button.",
     "SELECT_FIVE_DAYS": "PLAYBOOK: 1) Find view buttons. 2) Click 5-day or Work Week button.",
-    "ADD_NEW_CALENDAR": "PLAYBOOK: 1) Find the + or Add Calendar button in the left sidebar. 2) Click it to open the modal.",
+    "ADD_NEW_CALENDAR": "PLAYBOOK: 1) In the left sidebar, click the + button labeled 'Add new calendar' (opens modal—do NOT use 'Create new event' in the nav). 2) The ADD_NEW_CALENDAR event fires when the modal opens.",
     "CREATE_CALENDAR": "PLAYBOOK: 1) Click the + button next to Other calendars. 2) Fill in name and description satisfying constraints. 3) Click Create/Save.",
     "EVENT_ADD_ATTENDEE": "PLAYBOOK: 1) Find an event on the calendar. 2) Click on it to open. 3) Click Edit. 4) Find Add Attendee field. 5) Type email satisfying constraints. 6) Save.",
     "DELETE_ADDED_EVENT": "PLAYBOOK: 1) Browse calendar events. 2) Find the event matching ALL constraints. 3) Click on it. 4) Click Delete. 5) Confirm.",
@@ -315,7 +318,7 @@ TASK_PLAYBOOKS: dict[str, str] = {
     "EDIT_NUMBER_OF_GUESTS": "PLAYBOOK: 1) Find hotel/listing matching constraints. 2) Find the guest count selector. 3) Set it to the required number.",
     "SUBMIT_REVIEW": "PLAYBOOK: 1) Find listing matching constraints. 2) Click Write Review. 3) Set rating. 4) Type review text. 5) Submit.",
     "ADD_TO_WISHLIST_HOTEL": "PLAYBOOK: 1) Find hotel matching constraints. 2) Click Add to Wishlist/heart icon.",
-    "APPLY_FILTERS": "PLAYBOOK: 1) Find filter controls. 2) Set region/rating/price as specified. 3) Apply the filter.",
+    "APPLY_FILTERS": "PLAYBOOK: 1) Find filter controls (hotels: rating + region dropdowns). 2) Set values to satisfy TASK_CONSTRAINTS (rating, region contains/equals). 3) Click Apply (not Search) to emit APPLY_FILTERS.",
     "PEOPLE_DROPDOWN_OPENED": "PLAYBOOK: 1) Find the people/guest selector. 2) Click to open the dropdown. 3) Select the number satisfying the constraint.",
     "COUNTRY_SELECTED": "PLAYBOOK: 1) Find the country/destination dropdown. 2) Set other filters per constraints. 3) Open dropdown. 4) Select the specified country.",
     "RESTAURANT_NEXT_PAGE": "PLAYBOOK: 1) Look for pagination at bottom. 2) Click the Next button.",
@@ -339,6 +342,7 @@ TASK_PLAYBOOKS: dict[str, str] = {
     "CAROUSEL_SCROLL": "PLAYBOOK: 1) Find carousel section NOT the excluded one. 2) Click the scroll button.",
     "SHARE_PRODUCT": "PLAYBOOK: 1) Find product matching constraints. 2) Click Share button.",
     "ADD_CLIENT": "PLAYBOOK: 1) Navigate to Clients section. 2) Click Add New Client. 3) Fill form satisfying constraints. 4) Save.",
+    "DELETE_CLIENT": "PLAYBOOK: 1) Go to Clients. 2) Identify the row matching ALL constraints (name/email/status/matters/last). 3) Open that client (click row). 4) Click Delete client. 5) Confirm if prompted so DELETE_CLIENT fires.",
     "ADD_NEW_MATTER": "PLAYBOOK: 1) Navigate to Matters section. 2) Click Add New Matter. 3) Fill form. 4) Save.",
     "SORT_MATTER_BY_CREATED_AT": "PLAYBOOK: 1) Navigate to Matters list. 2) Find the created_at column header. 3) Click it to sort.",
     "CHANGE_USER_NAME": "PLAYBOOK: 1) Navigate to Settings or Profile. 2) Find the user name field. 3) Set it to the specified value. 4) Save.",

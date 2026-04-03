@@ -342,6 +342,8 @@ def classify_task_type(prompt: str) -> str:
         return "VIEW_CART"
 
     # ---- AutoDoc (8004) ----
+    if re.search(r"delete\s+the\s+client\b", t, re.IGNORECASE):
+        return "DELETE_CLIENT"
     if re.search(r"add\s+a\s+new\s+client", t, re.IGNORECASE):
         return "ADD_CLIENT"
     if re.search(r"add\s+a\s+new\s+matter", t, re.IGNORECASE):

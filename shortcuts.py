@@ -33,11 +33,26 @@ def _click_xpath(xpath: str) -> list[dict]:
 
 def try_quick_click(prompt: str, url: str, seed: str | None, step: int) -> list[dict] | None:
     t = prompt.lower()
+    from urllib.parse import urlsplit
+
+    _port = urlsplit(url).port
+    port = _port  # legacy name used below
 
     # Calendar
     if re.search(r"go\s+to\s+today|focus.*today|today.?s?\s+date\s+in\s+the\s+calendar", t):
         return _click("id", "focus-today")
-    if re.search(r"add\s+a?\s*new\s+calendar\s+event|add\s+calendar\s+button|click.*add\s+calendar", t):
+
+    # AutoCalendar (8010): open "add NEW calendar" modal — NOT the same as "create new event".
+    # The old pattern wrongly clicked new-event-cta; ADD_NEW_CALENDAR uses the sidebar + button.
+    if _port == 8010 and re.search(
+        r"add\s+calendar\s+button|modal\s+for\s+adding\s+a\s+new\s+calendar|open\s+the\s+modal.*new\s+calendar|"
+        r"press\s+the\s+button\s+to\s+add\s+a\s+calendar",
+        t,
+    ) and not re.search(r"calendar\s+event|new\s+calendar\s+event|add\s+an?\s+event", t):
+        return _click("aria-label", "Add new calendar")
+
+    # Create new calendar *event* (different from ADD_NEW_CALENDAR)
+    if re.search(r"add\s+a?\s*new\s+calendar\s+event|create\s+new\s+calendar\s+event", t):
         return _click("id", "new-event-cta")
     if re.search(r"click.*add\s+team|add\s+team\s+button", t):
         return _click("id", "add-team-btn")
@@ -61,8 +76,6 @@ def try_quick_click(prompt: str, url: str, seed: str | None, step: int) -> list[
         return _click("id", "view-details")
 
     # Autoconnect home tab
-    from urllib.parse import urlsplit
-    port = urlsplit(url).port
     if port == 8008 and re.search(r"go\s+to\s+the\s+home\s+tab|home\s+tab\s+from\s+the\s+navbar", t):
         return _click_xpath("//header//nav/a[1]")
 
@@ -115,6 +128,32 @@ def try_quick_click(prompt: str, url: str, seed: str | None, step: int) -> list[
             return _click("id", "cart-icon")
         if re.search(r"wishlist", t):
             return _click("id", "wishlist-btn")
+
+    # AutoLodge (8007): APPLY_FILTERS — rating + region dropdowns, then Apply (CheckEventTest APPLY_FILTERS).
+    if port == 8007 and re.search(
+        r"show\s+details\s+for\s+hotels|hotels\s+with.*rating|region\s+that\s+contains|apply\s+filters",
+        t,
+    ):
+        if step == 0:
+            return [
+                {
+                    "type": "SelectDropDownOptionAction",
+                    "selector": _sel_attr("id", "rating-filter"),
+                    "text": "Any",
+                }
+            ]
+        if step == 1:
+            region_label = "Ireland" if "ireland" in t else "All"
+            return [
+                {
+                    "type": "SelectDropDownOptionAction",
+                    "selector": _sel_attr("id", "region-filter"),
+                    "text": region_label,
+                }
+            ]
+        if step == 2:
+            return _click_xpath("(//div[contains(@class,'filters-bar')]//button)[last()]")
+        return None
 
     # View pending events (autocrm 8004)
     # Only handle steps 0 and 1; fall through to LLM for subsequent steps.
