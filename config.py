@@ -121,10 +121,14 @@ WEBSITE_HINTS: dict[str, str] = {
         "SITE: Hotel/lodging booking (Airbnb-style). Shows listing cards. "
         "Listing card/detail: title, host_name, location, price/night, rating, reviews count, amenities list, guests. "
         "Guest selector: +/- buttons or dropdown to set number of guests. "
-        "Actions: Reserve/Book Now -> payment form, Add to Wishlist, Submit Review. "
-        "Payment form fields: card_number, expiration (MM/YY), cvv, zipcode, country. "
-        "Payment methods: Credit card, PayPal, Bank transfer. "
-        "Search: search bar for hotel name/location. "
+        "BOOKING FLOW: Search -> pick listing (avoid hotel_id/title excluded by constraints) -> "
+        "click 'Book Now'/'Reserve' (id=book-button or similar) -> payment form opens -> "
+        "select payment method radio (name=payment-method) -> click Confirm/Book/Submit. "
+        "IMPORTANT: The booking event only fires after the final Submit/Confirm—not after radio select alone. "
+        "WARNING: Do NOT click brand-link (id=brand-link) or nav_home_link—these navigate to homepage and lose your progress. "
+        "Do NOT click travelers-count before booking. "
+        "Payment methods: cash_on_arrival, credit_card, bank_transfer. "
+        "Search bar id=submit-query. property-card-link opens listing detail. "
         "Filters: rating, region/country, price range. "
         "Review form: rating stars + text area."
     ),
@@ -305,9 +309,9 @@ TASK_PLAYBOOKS: dict[str, str] = {
     "EDIT_PROFILE_LOCATION": "PLAYBOOK: 1) Navigate to Profile/Settings. 2) Find Location field. 3) Enter value satisfying constraints. 4) Save.",
     "EDIT_PROFILE_EMAIL": "PLAYBOOK: 1) Navigate to Profile/Settings/Account. 2) Find Email field. 3) Enter value satisfying constraints. 4) Save.",
     "BOOKING_CONFIRM": "PLAYBOOK: 1) Browse listings. Find matching ALL TASK_CONSTRAINTS. 2) Set guests count. 3) Click Book Now/Reserve. 4) Fill payment form. 5) Submit/Confirm.",
-    "RESERVE_HOTEL": "PLAYBOOK: 1) Use search/filter to narrow listings. 2) Find ONE hotel matching numeric/title constraints (e.g. hotel_id greater_than, title not_contains). 3) Open detail or Book—avoid favorite/heart unless the task says favorite.",
+    "RESERVE_HOTEL": "PLAYBOOK: 1) Use search/filter to narrow listings. 2) Find ONE hotel matching ALL numeric/title constraints (hotel_id not_equals excludes that specific id; title not_contains excludes hotels containing that word). 3) Click on the hotel card (property-card-link) to open detail. 4) Click Book Now/Reserve (book-button). 5) Select payment method matching constraints. 6) Click Confirm/Submit to finalize—step 6 is required.",
     "SEARCH_HOTEL": "PLAYBOOK: 1) Find the hotel search bar. 2) Type a query that helps satisfy constraints. 3) Submit. 4) Pick the matching hotel row/card, not favorite.",
-    "PAYMENT_METHOD_SELECTED": "PLAYBOOK: 1) Find hotel matching constraints. 2) Click to book. 3) Select a payment method satisfying constraints.",
+    "PAYMENT_METHOD_SELECTED": "PLAYBOOK: 1) Search for hotels. 2) Select a hotel satisfying ALL constraints (hotel_id, title). 3) Click Book/Reserve on the hotel detail page. 4) On the booking form, select the payment method radio that satisfies constraints (e.g. 'cash_on_arrival'). 5) Click the Confirm/Book/Submit button to finalize—selecting the radio alone does NOT complete the booking.",
     "EDIT_NUMBER_OF_GUESTS": "PLAYBOOK: 1) Find hotel/listing matching constraints. 2) Find the guest count selector. 3) Set it to the required number.",
     "SUBMIT_REVIEW": "PLAYBOOK: 1) Find listing matching constraints. 2) Click Write Review. 3) Set rating. 4) Type review text. 5) Submit.",
     "ADD_TO_WISHLIST_HOTEL": "PLAYBOOK: 1) Find hotel matching constraints. 2) Click Add to Wishlist/heart icon.",

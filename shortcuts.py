@@ -95,7 +95,8 @@ def try_quick_click(prompt: str, url: str, seed: str | None, step: int) -> list[
                     return _click("id", "view-selector")
                 elif step == 1:
                     return _click("aria-label", label_map.get(view_name, f"Select {view_name.title()} view"))
-                return []
+                # step >= 2: fall through to LLM
+                return None
 
     # Navbar hires (autowork 8009)
     if port == 8009:
@@ -116,12 +117,14 @@ def try_quick_click(prompt: str, url: str, seed: str | None, step: int) -> list[
             return _click("id", "wishlist-btn")
 
     # View pending events (autocrm 8004)
+    # Only handle steps 0 and 1; fall through to LLM for subsequent steps.
     if port == 8004 and "pending" in t and "event" in t:
         if step == 0:
             return _click("id", "appointments-nav")
         elif step == 1:
             return _click("id", "toggle-future-events")
-        return []
+        # step >= 2: fall through to LLM to complete the task
+        return None
 
     # Enter location (autodrive 8012)
     if port == 8012:
@@ -138,11 +141,13 @@ def try_quick_click(prompt: str, url: str, seed: str | None, step: int) -> list[
                 elif step == 1:
                     return [{"type": "TypeAction", "text": m2.group(1),
                              "selector": {"type": "xpathSelector", "value": _loc_xpath}}]
-                return []
+                # step >= 2: fall through to LLM
+                return None
         if "enter" in t and "location" in t or "select a location" in t:
             if step == 0:
                 return _click_xpath(_loc_xpath)
-            return []
+            # step >= 1: fall through to LLM to type and submit
+            return None
 
     # Create label (automail 8005)
     if port == 8005 and "create" in t and "label" in t:
@@ -156,14 +161,16 @@ def try_quick_click(prompt: str, url: str, seed: str | None, step: int) -> list[
                                   "value": "//input[contains(@id, 'label-trigger') or contains(@id, 'tag-trigger')]"}}]
         elif step == 2:
             return _click_xpath("//button[contains(@id, 'add-label-btn') or contains(@id, 'add-label-button')]")
-        return []
+        # step >= 3: fall through to LLM
+        return None
 
     # Search delivery restaurant (autodelivery 8006)
     if port == 8006 and "search" in t and "restaurant" in t:
         m2 = re.search(r"(?:exactly |query is |query equals? )['\"]([^'\"]+)['\"]", prompt)
         if m2 and step == 0:
             return [{"type": "TypeAction", "text": m2.group(1), "selector": _sel_attr("id", "find-food")}]
-        return []
+        # step >= 1 or no query match: fall through to LLM
+        return None
 
     return None
 
