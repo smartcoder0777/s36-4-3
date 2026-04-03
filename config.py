@@ -50,7 +50,7 @@ PAGE_IR_CHAR_LIMIT = PAGE_IR_MAX_TOKENS * 4
 # ---------------------------------------------------------------------------
 # Agent limits
 # ---------------------------------------------------------------------------
-AGENT_MAX_STEPS = 10
+AGENT_MAX_STEPS = 12
 MAX_TASK_STATES = 8
 
 # Event/use-case aliases seen in evals that should map to existing strategies.
@@ -60,6 +60,8 @@ EVENT_TASK_ALIASES: dict[str, str] = {
     "ADD_TO_WISHLIST": "ADD_TO_WISHLIST_HOTEL",
     "UNHIDE_POST": "VIEW_HIDDEN_POSTS",
     "REMOVE_FROM_CART_BOOK": "REMOVE_FROM_CART",
+    "BROWSE_FAVORITE_EXPERT": "NAVBAR_EXPERTS_CLICK",
+    "VIEW_SUBNET": "FAVORITE_SUBNET",
 }
 
 # ---------------------------------------------------------------------------
@@ -497,6 +499,7 @@ TASK_PLAYBOOKS: dict[str, str] = {
     "FILTER_FILM": "PLAYBOOK: 1) Open **Films** / browse. 2) Use **genre** and/or **year** filters so values satisfy CONSTRAINTS (e.g. year ≤ value, genre equals). 3) Click **Apply** / **Filter**. 4) Open the matching film card if required.",
     "SEARCH_PRESCRIPTION": "PLAYBOOK: 1) Go to **Prescriptions** / Medical records. 2) Use search or filters for **medicine_name**, **doctor_name**, etc. 3) Narrow until one row matches ALL **not_equals** / **contains** rules. 4) Open details if required.",
     "VOICE_MUTE_TOGGLE": "PLAYBOOK: 1) Join or select the **voice channel** matching **channel_name** and **server_name**. 2) Click the **mute** / microphone control to toggle mute.",
+    "LEAVE_VOICE_CHANNEL": "PLAYBOOK: 1) Open server and voice channel matching constraints. 2) Join/select that voice channel. 3) Click Disconnect/Leave call button.",
     "ADD_REACTION": "PLAYBOOK: 1) Open the **channel** (not_equals constraints). 2) Find the **message** not matching excluded **message_id**. 3) Hover message → **Add reaction** → pick emoji.",
     "EDIT_USER_BOOK": "PLAYBOOK: 1) **Login** with TASK_CREDENTIALS. 2) Go to profile / **My books**. 3) Find the book field to edit per task. 4) Save.",
     "SETTINGS_APPEARANCE": "PLAYBOOK: 1) Open Settings. 2) Navigate to Appearance/Theme. 3) Choose the required theme (e.g. dark). 4) Save/apply if present.",
@@ -509,6 +512,8 @@ TASK_PLAYBOOKS: dict[str, str] = {
     "RESERVATION_COMPLETE": "PLAYBOOK: 1) On restaurant booking flow, choose restaurant matching constraints. 2) Set people/date/time/occasion as required. 3) Click Reserve/Complete booking to fire RESERVATION_COMPLETE.",
     "ADD_TO_WISHLIST": "PLAYBOOK: 1) Find item/hotel matching constraints. 2) Click Add to Wishlist/heart icon. 3) Ensure wishlist toggle turns on.",
     "FAVORITE_EXPERT_SELECTED": "PLAYBOOK: 1) Go to Experts list. 2) Find expert matching constraints. 3) Click favorite/star toggle.",
+    "BROWSE_FAVORITE_EXPERT": "PLAYBOOK: 1) Open Experts/Browse experts section. 2) Open favorites/saved experts tab if present. 3) Click any favorite expert card to browse details.",
+    "VIEW_SUBNET": "PLAYBOOK: 1) Open Subnets list. 2) Find subnet by name/id constraints. 3) Click subnet card/title to open details.",
     "GENERAL": "PLAYBOOK: Success requires triggering the correct backend event (submit/book/order). Find forms or primary CTAs (Book, Reserve, Submit, Search) matching the TASK. Avoid hero carousels (next/prev slide) unless the task asks to browse slides. Avoid cycling the same marketing/nav href. Use TASK_CONSTRAINTS for field values.",
 }
 

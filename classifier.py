@@ -160,6 +160,8 @@ def classify_task_type(prompt: str) -> str:
         return "VIEW_DOCTOR_AVAILABILITY"
     if re.search(r"show\s+me\s+(details\s+about\s+)?doctors", t, re.IGNORECASE):
         return "SEARCH_DOCTORS"
+    if re.search(r"search\s+doctors?\s+where|find\s+doctors?\s+where", t, re.IGNORECASE):
+        return "SEARCH_DOCTORS"
     if re.search(r"(search|retrieve)\s+(medical|details\s+of\s+medical)", t, re.IGNORECASE):
         return "SEARCH_MEDICAL_ANALYSIS"
     if re.search(r"view\s+medical\s+analysis", t, re.IGNORECASE):
@@ -248,6 +250,8 @@ def classify_task_type(prompt: str) -> str:
     # ---- AutoLodge (8007) ----
     if re.search(r"confirm\s+the\s+booking", t, re.IGNORECASE):
         return "BOOKING_CONFIRM"
+    if re.search(r"confirm\s+the\s+booking\s+details|confirm\s+and\s+pay|please\s+confirm\s+the\s+booking", t, re.IGNORECASE):
+        return "CONFIRM_AND_PAY"
     if re.search(r"(adjust|set|change)\s+the\s+number\s+of\s+guests", t, re.IGNORECASE):
         return "EDIT_NUMBER_OF_GUESTS"
     if re.search(r"(open\s+)?guest\s+selector\s+dropdown", t, re.IGNORECASE):
@@ -627,6 +631,8 @@ def classify_task_type(prompt: str) -> str:
     # ---- AutoDiscord (8015) ----
     if re.search(r"toggle\s+mute.*voice|mute.*voice\s+channel|voice\s+channel.*mute", t, re.IGNORECASE):
         return "VOICE_MUTE_TOGGLE"
+    if re.search(r"leave\s+the\s+voice\s+channel|disconnect\s+from\s+voice", t, re.IGNORECASE):
+        return "LEAVE_VOICE_CHANNEL"
     if re.search(r"add\s+a\s+reaction\s+to\s+a\s+message", t, re.IGNORECASE):
         return "ADD_REACTION"
     if re.search(r"(settings|appearance).*(theme|dark|light)", t, re.IGNORECASE):
@@ -640,6 +646,10 @@ def classify_task_type(prompt: str) -> str:
         return "RESERVATION_COMPLETE"
     if re.search(r"search\s+for\s+products?\s+where\s+the\s+query", t, re.IGNORECASE):
         return "SEARCH_PRODUCT"
+    if re.search(r"view\s+subnet|open\s+subnet\s+details", t, re.IGNORECASE):
+        return "VIEW_SUBNET"
+    if re.search(r"browse\s+favorite\s+expert", t, re.IGNORECASE):
+        return "BROWSE_FAVORITE_EXPERT"
     if re.search(r"favorite\s+the\s+subnet", t, re.IGNORECASE):
         return "FAVORITE_SUBNET"
     if re.search(r"remove\s+the\s+book.*from\s+the\s+shopping\s+cart", t, re.IGNORECASE):

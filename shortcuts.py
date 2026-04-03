@@ -380,6 +380,14 @@ def try_quick_click(prompt: str, url: str, seed: str | None, step: int) -> list[
         return _click_xpath(
             "//*[contains(@id,'next-page') or contains(@aria-label,'Next') or contains(.,'Next')]"
         )
+    if port == 8006 and re.search(r"delivery\s+priority|select\s+(a\s+)?delivery\s+priority", t):
+        if step == 0:
+            return _click_xpath("//*[contains(@id,'cart') or contains(@href,'cart') or contains(.,'Cart')]")
+        if step == 1:
+            return _click_xpath(
+                "//*[contains(@id,'delivery-priority') or contains(@id,'priority') or contains(.,'Priority') or contains(.,'Normal') or contains(.,'Scheduled')]"
+            )
+        return None
 
     # Add/edit log (autocrm 8004)
     if port == 8004 and re.search(r"add\s+log\s+entry|new\s+log\s+entry", t):
@@ -402,6 +410,14 @@ def try_quick_click(prompt: str, url: str, seed: str | None, step: int) -> list[
         if step == 1:
             return _click_xpath("//*[contains(.,'Delete Server') or contains(@id,'delete-server')]")
         return None
+    if port == 8015 and re.search(r"leave\s+the\s+voice\s+channel|disconnect\s+from\s+voice", t):
+        if step == 0:
+            return _click_xpath("//*[contains(.,'voice-chat') or contains(@id,'voice') or contains(@class,'voice')]")
+        if step == 1:
+            return _click_xpath(
+                "//*[contains(@id,'leave') or contains(@aria-label,'Leave') or contains(.,'Disconnect') or contains(.,'Leave call')]"
+            )
+        return None
 
     # Favorite subnet (autostats 8014)
     if port == 8014 and re.search(r"favorite\s+the\s+subnet", t):
@@ -412,6 +428,13 @@ def try_quick_click(prompt: str, url: str, seed: str | None, step: int) -> list[
         return _click_xpath(
             "//*[contains(@id,'favorite') or contains(@aria-label,'favorite') or contains(., 'Favorite')]"
         )
+    if port == 8014 and re.search(r"view\s+subnet|open\s+subnet\s+details", t):
+        m_name = re.search(r"named\s+['\"]([^'\"]+)['\"]|subnet\s+name(?:d)?\s+['\"]([^'\"]+)['\"]", prompt, re.IGNORECASE)
+        if m_name:
+            sn = (m_name.group(1) or m_name.group(2) or "").strip()
+            if sn:
+                return _click_xpath(f"//*[contains(., '{sn}')]")
+        return _click_xpath("//*[contains(@href,'subnet') or contains(@id,'subnet-card') or contains(.,'Subnet')]")
 
     # Rename document (autocrm 8004)
     if port == 8004 and re.search(r"rename\s+the\s+document\s+to", t):
@@ -430,6 +453,41 @@ def try_quick_click(prompt: str, url: str, seed: str | None, step: int) -> list[
             ]
         if step == 3:
             return _click_xpath("//*[contains(@id,'save') or contains(.,'Save') or contains(.,'Confirm')]")
+        return None
+
+    # Search doctors / refill prescriptions (autohealth 8013)
+    if port == 8013 and re.search(r"search\s+doctors?\s+where|find\s+doctors?\s+where", t):
+        m_spec = re.search(r"speciality\s+contains\s+['\"]([^'\"]+)['\"]", prompt, re.IGNORECASE)
+        m_lang = re.search(r"language\s+contains\s+['\"]([^'\"]+)['\"]", prompt, re.IGNORECASE)
+        query = (m_spec.group(1).strip() if m_spec else "") or (m_lang.group(1).strip() if m_lang else "")
+        if query and step == 0:
+            return [{"type": "TypeAction", "text": query, "selector": _sel_attr("id", "input")}]
+        return None
+    if port == 8013 and re.search(r"refill\s+prescription\s+where", t):
+        return _click_xpath(
+            "//*[contains(@id,'prescription') and (contains(.,'Refill') or contains(@id,'refill')) or contains(.,'Refill')]"
+        )
+
+    # Delete book (autobooks 8001) after login
+    if port == 8001 and re.search(r"(delete|remove)\s+(your\s+)?book", t):
+        if step == 0:
+            return _click_xpath("//*[contains(@href,'my-books') or contains(@id,'my-books') or contains(.,'My Books')]")
+        if step == 1:
+            return _click_xpath("//*[contains(@id,'delete-book') or contains(.,'Delete') or contains(.,'Remove')]")
+        return None
+
+    # Confirm and pay (autolodge 8007)
+    if port == 8007 and re.search(r"confirm\s+and\s+pay|confirm\s+the\s+booking", t):
+        m_title = re.search(r"title\s+equals\s+['\"]([^'\"]+)['\"]", prompt, re.IGNORECASE)
+        m_card = re.search(r"card_number\s+equals\s+['\"]([^'\"]+)['\"]", prompt, re.IGNORECASE)
+        if step == 0 and m_title:
+            return _click_xpath(f"//*[contains(., '{m_title.group(1).strip()}')]")
+        if step == 1:
+            return _click_xpath("//*[contains(@id,'book') or contains(.,'Book Now') or contains(.,'Reserve')]")
+        if step == 2 and m_card:
+            return [{"type": "TypeAction", "text": m_card.group(1).strip(), "selector": _sel_attr("id", "card-number")}]
+        if step == 3:
+            return _click_xpath("//*[contains(@id,'confirm') or contains(@id,'pay') or contains(.,'Confirm') or contains(.,'Pay')]")
         return None
 
     return None
