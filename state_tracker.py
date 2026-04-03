@@ -155,6 +155,17 @@ class StateTracker:
         state = _TASK_STATES.get(task_id)
         return (state.last_sig or "") if state else ""
 
+    @staticmethod
+    def get_last_click_selector_value(task_id: str) -> str:
+        """Selector `value` (e.g. element id) from the most recent ClickAction, if any."""
+        state = _TASK_STATES.get(task_id)
+        if not state or not state.history:
+            return ""
+        for h in reversed(state.history):
+            if h.action_type == "ClickAction" and (h.selector_value or "").strip():
+                return (h.selector_value or "").strip()
+        return ""
+
     # -----------------------------------------------------------------------
     # Loop detection: same (action_type, selector, url) repeated 2+ times
     # -----------------------------------------------------------------------

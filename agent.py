@@ -62,6 +62,26 @@ def _pick_non_repeating_click_index(candidates: list, last_sig: str) -> int | No
     return None
 
 
+def _candidate_selector_value(c) -> str:
+    try:
+        sel = getattr(c, "selector", None)
+        if sel is not None:
+            return (getattr(sel, "value", None) or "").strip()
+    except Exception:
+        pass
+    return ""
+
+
+def _pick_click_avoiding_selector_value(candidates: list, avoid: str) -> int | None:
+    """Pick first candidate whose selector value differs from *avoid* (break repeat-click loops)."""
+    if not (avoid or "").strip():
+        return None
+    for i, c in enumerate(candidates):
+        if _candidate_selector_value(c) != avoid:
+            return i
+    return None
+
+
 def _history_no_progress(history: list | None) -> bool:
     if not isinstance(history, list) or not history:
         return True
@@ -444,6 +464,22 @@ async def handle_act(
         idx = _pick_non_repeating_click_index(candidates, StateTracker.get_last_sig(task))
         if idx is not None:
             decision = {"action": "click", "candidate_id": idx}
+
+    # Hard guard: LLM often re-picks the same element id (e.g. favorite-action) — no progress.
+    if _env_flag("AGENT_ENABLE_SAME_CLICK_GUARD", True) and candidates:
+        act0 = (decision.get("action") or "").lower()
+        cid0 = decision.get("candidate_id")
+        if act0 == "click" and isinstance(cid0, int) and 0 <= cid0 < len(candidates):
+            last_sv = StateTracker.get_last_click_selector_value(task)
+            upcoming_sv = _candidate_selector_value(candidates[cid0])
+            if last_sv and upcoming_sv and last_sv == upcoming_sv:
+                alt = _pick_click_avoiding_selector_value(candidates, upcoming_sv)
+                if alt is not None:
+                    logger.info("Overriding repeat click on selector value=%s -> candidate_id=%s", upcoming_sv, alt)
+                    decision = {"action": "click", "candidate_id": alt}
+                else:
+                    logger.info("Repeat click on %s; no alternate candidate — scroll", upcoming_sv)
+                    decision = {"action": "scroll", "direction": "down"}
 
     act_name = (decision.get("action") or "").lower()
     if act_name == "done":
