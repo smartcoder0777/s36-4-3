@@ -34,6 +34,7 @@ from constraint_parser import (
     parse_constraints,
     format_constraints_block,
     extract_credentials,
+    forbidden_not_equals_location_strings,
 )
 from html_parser import prune_html, extract_candidates, build_page_ir, build_dom_digest
 from navigation import extract_seed
@@ -41,7 +42,7 @@ from shortcuts import try_quick_click, try_search_shortcut, try_shortcut
 from state_tracker import StateTracker
 from llm_client import LLMClient
 from prompts import build_system_prompt, build_user_prompt
-from action_builder import parse_llm_response, build_iwa_action, WAIT_ACTION
+from action_builder import parse_llm_response, build_iwa_action, WAIT_ACTION, sanitize_type_text
 from tool_use import run_tool, tool_list_cards
 
 logger = logging.getLogger(__name__)
@@ -567,6 +568,23 @@ async def handle_act(
             idx = _pick_non_repeating_click_index(candidates, StateTracker.get_last_sig(task))
             if idx is not None:
                 decision = {"action": "click", "candidate_id": idx}
+
+    # Never satisfy not_equals by accident: do not type excluded location strings.
+    if (decision.get("action") or "").lower() == "type" and state.constraints:
+        forbidden = forbidden_not_equals_location_strings(state.constraints)
+        if forbidden:
+            text = sanitize_type_text(decision.get("text")) or sanitize_type_text(
+                decision.get("value")
+            )
+            for fbd in forbidden:
+                if text == fbd:
+                    decision = dict(decision)
+                    decision["text"] = "1 Front Street, San Francisco, CA 94111"
+                    decision.pop("value", None)
+                    logger.warning(
+                        "Replaced type text that matched a not_equals forbidden location"
+                    )
+                    break
 
     action = build_iwa_action(decision, candidates, url, seed)
 

@@ -113,6 +113,27 @@ def parse_constraints(prompt: str) -> list[Constraint]:
     return constraints
 
 
+_LOCATION_FIELDS = frozenset(
+    {"destination", "pickup", "dropoff", "location", "origin", "address", "from", "to"}
+)
+
+
+def forbidden_not_equals_location_strings(constraints: list[Constraint]) -> list[str]:
+    """Values the agent must never type into location fields (not_equals)."""
+    out: list[str] = []
+    for c in constraints:
+        if c.operator != "not_equals":
+            continue
+        if c.field not in _LOCATION_FIELDS:
+            continue
+        if c.value is None:
+            continue
+        s = str(c.value).strip()
+        if s:
+            out.append(s)
+    return out
+
+
 def format_constraints_block(constraints: list[Constraint]) -> str:
     if not constraints:
         return ""
@@ -120,7 +141,14 @@ def format_constraints_block(constraints: list[Constraint]) -> str:
     for c in constraints:
         op_map = {
             "equals": f"  [{c.field}] MUST EQUAL '{c.value}' exactly",
-            "not_equals": f"  [{c.field}] must NOT be '{c.value}' -> choose any other value",
+            "not_equals": (
+                f"  [{c.field}] must NOT be '{c.value}' -> choose any other value"
+                + (
+                    f" — NEVER type this exact string for {c.field}; use a different real address."
+                    if c.field in _LOCATION_FIELDS
+                    else ""
+                )
+            ),
             "contains": f"  [{c.field}] MUST CONTAIN '{c.value}'",
             "not_contains": f"  [{c.field}] must NOT CONTAIN '{c.value}'",
             "greater_than": f"  [{c.field}] must be > {c.value}",
@@ -165,8 +193,10 @@ def extract_search_query(prompt: str) -> str | None:
     """Extract search query from task prompt."""
     constraints = parse_constraints(prompt)
     for c in constraints:
-        if c.field == "query":
-            return str(c.value)
+        if c.field == "query" and c.value is not None:
+            s = str(c.value).strip()
+            if s and s.lower() not in ("none", "null", "undefined"):
+                return s
     m = re.search(r"search\s+(?:for\s+)?.*?['\"]([^'\"]+)['\"]", prompt, re.IGNORECASE)
     if m:
         return m.group(1)

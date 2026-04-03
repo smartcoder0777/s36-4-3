@@ -99,10 +99,13 @@ def try_quick_click(prompt: str, url: str, seed: str | None, step: int) -> list[
 
     # --- Season 1 overfit additions ---
 
-    # Calendar view switching (autocalendar 8010)
+    # Calendar view switching (autocalendar 8010) — word boundaries avoid
+    # false matches like "switch to monthly" or stray "week" in unrelated copy.
     if port == 8010:
         for view_name in ("day", "week", "month"):
-            if f"switch to {view_name}" in t or f"{view_name} view" in t:
+            if re.search(rf"\bswitch to {view_name}\b", t, re.IGNORECASE) or re.search(
+                rf"\b{view_name}\s+view\b", t, re.IGNORECASE
+            ):
                 label_map = {"day": "Select Day view", "week": "Select Week view", "month": "Select Month view"}
                 if step == 0:
                     return _click("id", "view-selector")
@@ -226,6 +229,9 @@ def try_search_shortcut(prompt: str, website: str | None) -> list[dict] | None:
         return None
     query = extract_search_query(prompt)
     if not query:
+        return None
+    q = query.strip()
+    if q.lower() in ("none", "null", "undefined", "n/a"):
         return None
     return [{"type": "TypeAction", "text": query, "selector": _sel_attr("id", input_id)}]
 

@@ -64,6 +64,19 @@ def parse_llm_response(content: str) -> dict | None:
 # Credential inference for type actions
 # ---------------------------------------------------------------------------
 
+def sanitize_type_text(raw) -> str:
+    """Normalize LLM/JSON output: null, literal 'None', etc. → empty string."""
+    if raw is None:
+        return ""
+    s = str(raw).strip()
+    if not s:
+        return ""
+    low = s.lower()
+    if low in ("none", "null", "undefined", "n/a", "[none]", "(none)"):
+        return ""
+    return s
+
+
 def _infer_credentials(text: str, candidate: Candidate) -> str:
     """Fill in credential placeholders when LLM leaves text empty."""
     if text:
@@ -106,17 +119,26 @@ def build_iwa_action(
             return {"type": "ClickAction", "selector": sel}
 
         if action == "type":
-            text = decision.get("text", decision.get("value", ""))
+            raw = decision.get("text")
+            if raw is None:
+                raw = decision.get("value")
+            text = sanitize_type_text(raw)
             text = _infer_credentials(text, candidate)
+            if not (text or "").strip():
+                logger.warning("Type action: no valid text after sanitize; using scroll")
+                return {"type": "ScrollAction", "down": True}
             return {"type": "TypeAction", "text": text, "selector": sel}
 
         if action == "select_option":
             if (candidate.tag or "").lower() != "select":
                 return {"type": "ClickAction", "selector": sel}
-            text = decision.get("text", "")
+            text = sanitize_type_text(decision.get("text"))
             # If no text given but candidate has options, pick first
             if not text and candidate.options:
                 text = candidate.options[0]
+            if not (text or "").strip():
+                logger.warning("Select option: no valid text; using scroll")
+                return {"type": "ScrollAction", "down": True}
             return {"type": "SelectDropDownOptionAction", "text": text, "selector": sel}
 
     # --- Navigate ---
