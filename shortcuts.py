@@ -38,8 +38,14 @@ def try_quick_click(prompt: str, url: str, seed: str | None, step: int) -> list[
     _port = urlsplit(url).port
     port = _port  # legacy name used below
 
+    def _step0_only() -> bool:
+        """Fixed one-click shortcuts must not repeat every step (wastes steps, 0 LLM tokens)."""
+        return step == 0
+
     # Calendar
     if re.search(r"go\s+to\s+today|focus.*today|today.?s?\s+date\s+in\s+the\s+calendar", t):
+        if not _step0_only():
+            return None
         return _click("id", "focus-today")
 
     # AutoCalendar (8010): open "add NEW calendar" modal — NOT the same as "create new event".
@@ -49,37 +55,57 @@ def try_quick_click(prompt: str, url: str, seed: str | None, step: int) -> list[
         r"press\s+the\s+button\s+to\s+add\s+a\s+calendar",
         t,
     ) and not re.search(r"calendar\s+event|new\s+calendar\s+event|add\s+an?\s+event", t):
+        if not _step0_only():
+            return None
         return _click("aria-label", "Add new calendar")
 
     # Create new calendar *event* (different from ADD_NEW_CALENDAR)
     if re.search(r"add\s+a?\s*new\s+calendar\s+event|create\s+new\s+calendar\s+event", t):
+        if not _step0_only():
+            return None
         return _click("id", "new-event-cta")
     if re.search(r"click.*add\s+team|add\s+team\s+button", t):
+        if not _step0_only():
+            return None
         return _click("id", "add-team-btn")
 
     # Wishlist / favorites
     if re.search(r"(show\s+me\s+my\s+saved|my\s+wishlist|show.*wishlist|view.*wishlist|favorites?\s+page)", t):
+        if not _step0_only():
+            return None
         return _click("id", "favorite-action")
 
     # Navbar navigation
     if re.search(r"clicks?\s+on\s+the\s+jobs?\s+option\s+in\s+the\s+navbar", t):
+        if not _step0_only():
+            return None
         return _click("href", f"/jobs?seed={seed}") if seed else None
     if re.search(r"clicks?\s+on\s+.*profile\s+.*in\s+the\s+navbar", t):
+        if not _step0_only():
+            return None
         return _click("href", f"/profile/alexsmith?seed={seed}") if seed else None
 
     # Featured / spotlight items
     if re.search(r"(spotlight|featured)\s+.*(?:movie|film).*details|view\s+details\s+.*(?:spotlight|featured)\s+(?:movie|film)", t):
+        if not _step0_only():
+            return None
         return _click("id", "spotlight-view-details-btn")
     if re.search(r"(spotlight|featured)\s+.*book.*details|view\s+details\s+.*(?:featured|spotlight)\s+book", t):
+        if not _step0_only():
+            return None
         return _click("id", "featured-book-view-details-btn-1")
     if re.search(r"(spotlight|featured)\s+.*product.*details|view\s+details\s+.*(?:featured|spotlight)\s+product", t):
+        if not _step0_only():
+            return None
         return _click("id", "view-details")
 
     # Autoconnect home tab
     if port == 8008 and re.search(r"go\s+to\s+the\s+home\s+tab|home\s+tab\s+from\s+the\s+navbar", t):
+        if not _step0_only():
+            return None
         return _click_xpath("//header//nav/a[1]")
 
-    # Clear selection
+    # Clear selection (can be step 1 after selecting emails; do not restrict to step 0)
     if re.search(r"clear\s+(the\s+)?(current\s+)?selection", t):
         return _click_xpath("(//button[@role='checkbox'])[1]")
 
@@ -95,6 +121,8 @@ def try_quick_click(prompt: str, url: str, seed: str | None, step: int) -> list[
     # Like a post (autoconnect)
     m = re.search(r"like\s+(?:the\s+)?(?:post|first\s+post|latest\s+post)", t)
     if m and port == 8008:
+        if not _step0_only():
+            return None
         return _click("id", "post_like_button_p1")
 
     # --- Season 1 overfit additions ---
@@ -120,8 +148,12 @@ def try_quick_click(prompt: str, url: str, seed: str | None, step: int) -> list[
     # Navbar hires (autowork 8009)
     if port == 8009:
         if re.search(r"hire\s+later.*navbar|navbar.*hire\s+later", t):
+            if not _step0_only():
+                return None
             return _click("href", f"/hire-later?seed={seed}") if seed else None
         if re.search(r"hires.*navbar|navbar.*hires", t):
+            if not _step0_only():
+                return None
             return _click("href", f"/hires?seed={seed}") if seed else None
         if re.search(r"book\s+a\s+consultation", t):
             m_name = re.search(r"name\s+equals\s+['\"]([^'\"]+)['\"]", prompt, re.IGNORECASE)
@@ -135,14 +167,20 @@ def try_quick_click(prompt: str, url: str, seed: str | None, step: int) -> list[
 
     # About page (autodining 8003)
     if port == 8003 and re.search(r"about\s+page|navigate.*about.*information", t):
+        if not _step0_only():
+            return None
         return _click("id", "about-menu-item")
 
     # Contact page (autodining 8003) — CONTACT_PAGE_VIEW
     if port == 8003 and re.search(r"open\s+the\s+contact\s+page", t):
+        if not _step0_only():
+            return None
         if seed:
             return _click("href", f"/contact?seed={seed}")
         return _click("href", "/contact")
     if port == 8003 and re.search(r"finalize\s+a\s+reservation|reservation\s+complete|complete\s+reservation", t):
+        if not _step0_only():
+            return None
         return _click_xpath(
             "//*[contains(@id,'reserve') or contains(@id,'book') or contains(.,'Reserve') or contains(.,'Book')]"
         )
@@ -150,24 +188,38 @@ def try_quick_click(prompt: str, url: str, seed: str | None, step: int) -> list[
     # View cart (autozone 8002)
     if port == 8002:
         if re.search(r"shopping\s+cart|contents\s+of\s+my", t):
+            if not _step0_only():
+                return None
             return _click("id", "cart-icon")
         if re.search(r"wishlist", t):
+            if not _step0_only():
+                return None
             return _click("id", "wishlist-btn")
 
     # View cart (autobooks 8001)
     if port == 8001 and re.search(r"shopping\s+cart|view\s+the\s+shopping\s+cart|cart\s+contents", t):
+        if step > 0:
+            return None
+        if re.search(r"\b(authenticate|login|sign\s*in)\b", t, re.IGNORECASE):
+            return None
         return _click_xpath("//*[contains(@id,'cart') or contains(@href,'/cart') or contains(.,'Cart')]")
 
     # Add book (autobooks 8001)
     if port == 8001 and re.search(r"(add|create)\s+a\s+book", t):
+        if not _step0_only():
+            return None
         return _click_xpath("//*[contains(@id,'add-book') or contains(@id,'new-book') or contains(.,'Add Book')]")
 
     # Help viewed (generic help nav)
     if re.search(r"\bhelp\s+page\b|open\s+the\s+help", t):
+        if not _step0_only():
+            return None
         return _click_xpath("//*[contains(@id,'help') or contains(@href,'help') or contains(.,'Help') or contains(.,'FAQ')]")
 
     # AutoList add-task click (8011)
     if port == 8011 and re.search(r"create\s+a\s+new\s+task|add\s+a\s+new\s+task", t):
+        if not _step0_only():
+            return None
         return _click_xpath("//*[contains(@id,'add-task') or contains(@id,'new-task') or contains(.,'Add Task')]")
     if port == 8011 and re.search(r"cancel\s+the\s+task\s+creation|cancel\s+creating\s+the\s+task", t):
         if step == 0:

@@ -419,6 +419,18 @@ async def handle_act(
     if state.task_type.startswith("LOGIN_THEN_") and not state.login_done:
         shortcut_type = "login"
 
+    # VIEW_CART_BOOK often says "authenticate first, then cart" — login before cart quick-click.
+    if (
+        state.task_type == "VIEW_CART_BOOK"
+        and not state.login_done
+        and re.search(
+            r"\b(authenticate|first\s*,?\s*authenticate|login|sign\s*in)\b",
+            prompt or "",
+            re.IGNORECASE,
+        )
+    ):
+        shortcut_type = "login"
+
     if shortcut_type and soup and candidates:
         shortcut_actions = try_shortcut(shortcut_type, candidates, soup, step)
         if shortcut_actions is not None:
