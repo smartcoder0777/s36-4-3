@@ -53,6 +53,14 @@ PAGE_IR_CHAR_LIMIT = PAGE_IR_MAX_TOKENS * 4
 AGENT_MAX_STEPS = 10
 MAX_TASK_STATES = 8
 
+# Event/use-case aliases seen in evals that should map to existing strategies.
+EVENT_TASK_ALIASES: dict[str, str] = {
+    "SEARCH_PRODUCT": "SEARCH_ITEM",
+    "SEARCH": "SEARCH_RIDE",
+    "ADD_TO_WISHLIST": "ADD_TO_WISHLIST_HOTEL",
+    "UNHIDE_POST": "VIEW_HIDDEN_POSTS",
+}
+
 # ---------------------------------------------------------------------------
 # Per-website hints (detailed UI structure per site)
 # ---------------------------------------------------------------------------
@@ -488,6 +496,14 @@ TASK_PLAYBOOKS: dict[str, str] = {
     "EDIT_USER_BOOK": "PLAYBOOK: 1) **Login** with TASK_CREDENTIALS. 2) Go to profile / **My books**. 3) Find the book field to edit per task. 4) Save.",
     "SETTINGS_APPEARANCE": "PLAYBOOK: 1) Open Settings. 2) Navigate to Appearance/Theme. 3) Choose the required theme (e.g. dark). 4) Save/apply if present.",
     "DISCONNECT_WALLET": "PLAYBOOK: 1) Open wallet/account settings. 2) Locate wallet entry matching constraints. 3) Click Disconnect/Unlink. 4) Confirm if prompted.",
+    "SEARCH_PRODUCT": "PLAYBOOK: 1) Find product search bar. 2) Type query from TASK_CONSTRAINTS exactly. 3) Submit search (Enter or search button). 4) Wait for filtered product results.",
+    "SEARCH": "PLAYBOOK: 1) Use search input relevant to the app (rides/location/products depending on page). 2) Type query from constraints. 3) Submit and verify results update.",
+    "NEW_LOG_ADDED": "PLAYBOOK: 1) Navigate to Logs/Time entries. 2) Click Add New Log. 3) Fill description/duration/matter constraints. 4) Save/Submit so NEW_LOG_ADDED fires.",
+    "DELETE_SERVER": "PLAYBOOK: 1) Open server/channel list and find server matching constraints. 2) Open server settings/context menu. 3) Click Delete Server. 4) Confirm deletion.",
+    "UNHIDE_POST": "PLAYBOOK: 1) Open Hidden posts section. 2) Find post matching constraints. 3) Click Unhide/Restore from menu.",
+    "RESERVATION_COMPLETE": "PLAYBOOK: 1) On restaurant booking flow, choose restaurant matching constraints. 2) Set people/date/time/occasion as required. 3) Click Reserve/Complete booking to fire RESERVATION_COMPLETE.",
+    "ADD_TO_WISHLIST": "PLAYBOOK: 1) Find item/hotel matching constraints. 2) Click Add to Wishlist/heart icon. 3) Ensure wishlist toggle turns on.",
+    "FAVORITE_EXPERT_SELECTED": "PLAYBOOK: 1) Go to Experts list. 2) Find expert matching constraints. 3) Click favorite/star toggle.",
     "GENERAL": "PLAYBOOK: Success requires triggering the correct backend event (submit/book/order). Find forms or primary CTAs (Book, Reserve, Submit, Search) matching the TASK. Avoid hero carousels (next/prev slide) unless the task asks to browse slides. Avoid cycling the same marketing/nav href. Use TASK_CONSTRAINTS for field values.",
 }
 

@@ -292,6 +292,8 @@ def classify_task_type(prompt: str) -> str:
         return "VIEW_DELIVERY_RESTAURANT"
     if re.search(r"show\s+all\s+restaurants", t, re.IGNORECASE):
         return "VIEW_ALL_RESTAURANTS"
+    if re.search(r"(next|show\s+me\s+the\s+next)\s+page\s+of\s+restaurants", t, re.IGNORECASE):
+        return "RESTAURANT_NEXT_PAGE"
     if re.search(r"(go\s+to\s+)?checkout\s+and\s+show\s+the\s+order", t, re.IGNORECASE):
         return "OPEN_CHECKOUT_PAGE"
 
@@ -382,6 +384,8 @@ def classify_task_type(prompt: str) -> str:
         return "DOCUMENT_DELETED"
     if re.search(r"sort\s+matters?\s+so\s+that", t, re.IGNORECASE):
         return "SORT_MATTER_BY_CREATED_AT"
+    if re.search(r"add\s+log\s+entry|new\s+log\s+entry", t, re.IGNORECASE):
+        return "NEW_LOG_ADDED"
     if re.search(r"change\s+(user\s+)?name\s+to", t, re.IGNORECASE):
         return "CHANGE_USER_NAME"
     if re.search(r"show.*pending\s+events\s+on\s+the\s+calendar", t, re.IGNORECASE):
@@ -515,6 +519,8 @@ def classify_task_type(prompt: str) -> str:
         return "POST_STATUS"
     if re.search(r"remove\s+post\s+where", t, re.IGNORECASE):
         return "REMOVE_POST"
+    if re.search(r"unhide\s+the\s+post", t, re.IGNORECASE):
+        return "UNHIDE_POST"
     if re.search(r"(view|open|show).*(user|profile).*(profile|details)", t, re.IGNORECASE):
         return "VIEW_USER_PROFILE"
 
@@ -623,6 +629,13 @@ def classify_task_type(prompt: str) -> str:
         return "SETTINGS_APPEARANCE"
     if re.search(r"disconnect\s+the\s+wallet", t, re.IGNORECASE):
         return "DISCONNECT_WALLET"
+    if re.search(r"delete\s+the\s+server", t, re.IGNORECASE):
+        return "DELETE_SERVER"
+
+    if re.search(r"finalize\s+a\s+reservation|reservation\s+complete|complete\s+reservation", t, re.IGNORECASE):
+        return "RESERVATION_COMPLETE"
+    if re.search(r"search\s+for\s+products?\s+where\s+the\s+query", t, re.IGNORECASE):
+        return "SEARCH_PRODUCT"
 
     # ---- Generic fallbacks ----
     if re.search(r"\b(register|sign.?up|create.*account|fill.*registration)\b", t):

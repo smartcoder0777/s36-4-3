@@ -135,6 +135,10 @@ def try_quick_click(prompt: str, url: str, seed: str | None, step: int) -> list[
         if seed:
             return _click("href", f"/contact?seed={seed}")
         return _click("href", "/contact")
+    if port == 8003 and re.search(r"finalize\s+a\s+reservation|reservation\s+complete|complete\s+reservation", t):
+        return _click_xpath(
+            "//*[contains(@id,'reserve') or contains(@id,'book') or contains(.,'Reserve') or contains(.,'Book')]"
+        )
 
     # View cart (autozone 8002)
     if port == 8002:
@@ -208,6 +212,10 @@ def try_quick_click(prompt: str, url: str, seed: str | None, step: int) -> list[
                      "contains(@placeholder, 'Enter pickup') or "
                      "contains(@placeholder, 'Start location') or "
                      "contains(@placeholder, 'Where are you?')]")
+        _dst_xpath = ("//input[contains(@placeholder, 'Destination') or "
+                     "contains(@placeholder, 'Where to') or "
+                     "contains(@placeholder, 'Dropoff') or "
+                     "contains(@placeholder, 'Enter destination')]")
         m_time = re.search(r"time\s+for\s+my\s+trip\s+to\s+be\s+at\s+['\"]([^'\"]+)['\"]", prompt, re.IGNORECASE)
         if m_time:
             time_val = m_time.group(1).strip()
@@ -227,6 +235,14 @@ def try_quick_click(prompt: str, url: str, seed: str | None, step: int) -> list[
                 return _click_xpath(
                     f"//*[contains(@id,'time-option') and contains(., '{time_val}') or contains(., '{time_val}')]"
                 )
+            return None
+        m_dst = re.search(r"destination\s+(?:value\s+)?(?:equals?|is)\s+['\"]([^'\"]+)['\"]", prompt, re.IGNORECASE)
+        if m_dst:
+            if step == 0:
+                return _click_xpath(_dst_xpath)
+            if step == 1:
+                return [{"type": "TypeAction", "text": m_dst.group(1).strip(),
+                         "selector": {"type": "xpathSelector", "value": _dst_xpath}}]
             return None
         if "search location" in t:
             m2 = re.search(r"(?:for |details for )['\"]([^'\"]+)['\"]", prompt)
@@ -300,6 +316,32 @@ def try_quick_click(prompt: str, url: str, seed: str | None, step: int) -> list[
         if m2 and step == 0:
             return [{"type": "TypeAction", "text": m2.group(1), "selector": _sel_attr("id", "find-food")}]
         # step >= 1 or no query match: fall through to LLM
+        return None
+    if port == 8006 and re.search(r"(next|show\s+me\s+the\s+next)\s+page\s+of\s+restaurants", t):
+        return _click_xpath(
+            "//*[contains(@id,'next-page') or contains(@aria-label,'Next') or contains(.,'Next')]"
+        )
+
+    # Add/edit log (autocrm 8004)
+    if port == 8004 and re.search(r"add\s+log\s+entry|new\s+log\s+entry", t):
+        if step == 0:
+            return _click_xpath(
+                "//*[contains(@id,'log') and (contains(@id,'add') or contains(.,'Add')) or contains(.,'Add log')]"
+            )
+        return None
+
+    # Unhide post (autoconnect 8008)
+    if port == 8008 and re.search(r"unhide\s+the\s+post", t):
+        return _click_xpath("//*[contains(@id,'hidden') or contains(@href,'hidden') or contains(.,'Hidden posts')]")
+
+    # Delete server (autodiscord 8015)
+    if port == 8015 and re.search(r"delete\s+the\s+server", t):
+        if step == 0:
+            return _click_xpath(
+                "//*[contains(@id,'server') and (contains(@id,'settings') or contains(.,'Settings'))]"
+            )
+        if step == 1:
+            return _click_xpath("//*[contains(.,'Delete Server') or contains(@id,'delete-server')]")
         return None
 
     return None

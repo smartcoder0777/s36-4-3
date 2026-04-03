@@ -28,6 +28,7 @@ from config import (
     detect_website,
     WEBSITE_HINTS,
     TASK_PLAYBOOKS,
+    EVENT_TASK_ALIASES,
     AGENT_MAX_STEPS,
 )
 from classifier import classify_task_type, classify_shortcut_type
@@ -254,10 +255,16 @@ def _extract_use_case_hint(prompt: str, relevant_data: dict | None) -> str | Non
                 token = v.strip().upper()
                 if token in TASK_PLAYBOOKS:
                     return token
+                alias = EVENT_TASK_ALIASES.get(token)
+                if alias and alias in TASK_PLAYBOOKS:
+                    return alias
     for m in re.finditer(r"'([A-Z][A-Z0-9_]{3,})'", prompt or ""):
         token = m.group(1).strip().upper()
         if token in TASK_PLAYBOOKS:
             return token
+        alias = EVENT_TASK_ALIASES.get(token)
+        if alias and alias in TASK_PLAYBOOKS:
+            return alias
     return None
 
 
