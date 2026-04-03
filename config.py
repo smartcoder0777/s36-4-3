@@ -277,11 +277,11 @@ TASK_PLAYBOOKS: dict[str, str] = {
     "SEARCH_DOCTORS": "PLAYBOOK: 1) Find search/filter fields for doctors. 2) Enter search criteria matching constraints. 3) Submit search.",
     "SEARCH_MEDICAL_ANALYSIS": "PLAYBOOK: 1) Navigate to Medical Records/Analysis. 2) Use search/filter fields. 3) Submit/search.",
     "VIEW_MEDICAL_ANALYSIS": "PLAYBOOK: 1) Navigate to Medical Records. 2) Find the record matching constraints. 3) Click to view details.",
-    "OPEN_APPOINTMENT_FORM": "PLAYBOOK: 1) Browse doctor cards. 2) Find doctor matching ALL constraints. 3) Click Book Appointment. 4) Fill in date and time. 5) Open/submit.",
+    "OPEN_APPOINTMENT_FORM": "PLAYBOOK: 1) Browse doctor cards or search — avoid homepage carousel. 2) Find doctor/speciality matching ALL constraints (not_equals means pick a different option). 3) Click Book Appointment. 4) Fill date, time, patient fields per constraints. 5) Submit.",
     "OPEN_CONTACT_DOCTOR_FORM": "PLAYBOOK: 1) Find doctor matching ALL constraints. 2) Click Contact Doctor button.",
     "CONTACT_DOCTOR": "PLAYBOOK: 1) Find doctor matching constraints. 2) Click Contact. 3) Fill the contact form. 4) Submit.",
     "SEARCH_APPOINTMENT": "PLAYBOOK: 1) Go to Appointments section. 2) Search/filter for matching appointments. 3) View results.",
-    "REQUEST_QUICK_APPOINTMENT": "PLAYBOOK: 1) Find Quick Appointment button. 2) Fill form satisfying constraints. 3) Submit.",
+    "REQUEST_QUICK_APPOINTMENT": "PLAYBOOK: 1) Find Quick Appointment (or Book Appointment) — not carousel arrows. 2) Fill patient name, email, speciality/doctor fields so not_equals/not_contains constraints hold (e.g. pick speciality != excluded value). 3) Submit/confirm so the appointment event fires.",
     "VIEW_DOCTOR_EDUCATION": "PLAYBOOK: 1) Browse doctors list. 2) Find doctor matching ALL constraints. 3) Click on doctor's card. 4) Find Education tab/section. 5) Click it.",
     "COMMENT_ON_POST": "PLAYBOOK: 1) Find a post in the feed. 2) Click the Comment button. 3) Type the EXACT comment text. 4) Submit.",
     "FOLLOW_PAGE": "PLAYBOOK: 1) Find the company page matching constraints. 2) Click the Follow button.",
@@ -440,7 +440,7 @@ TASK_PLAYBOOKS: dict[str, str] = {
     "EDIT_TASK": "PLAYBOOK: 1) Find task matching constraints. 2) Click Edit. 3) Update fields. 4) Save.",
     "COMPLETE_TASK": "PLAYBOOK: 1) Find task matching constraints. 2) Click Complete/Done/Checkmark.",
     "JOB_POSTING": "PLAYBOOK: 1) Find Post a Job button. 2) Click it. 3) Type EXACT job title. 4) Submit.",
-    "GENERAL": "PLAYBOOK: Analyze the task carefully, identify the key action required, and execute the most direct path. Use TASK_CONSTRAINTS to find the correct item and fill forms.",
+    "GENERAL": "PLAYBOOK: Success requires triggering the correct backend event (submit/book/order). Find forms or primary CTAs (Book, Reserve, Submit, Search) matching the TASK. Avoid hero carousels (next/prev slide) unless the task asks to browse slides. Use TASK_CONSTRAINTS for field values.",
 }
 
 # ---------------------------------------------------------------------------

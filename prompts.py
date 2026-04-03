@@ -10,13 +10,20 @@ def build_system_prompt() -> str:
         "click/type/select_option: candidate_id=integer from the Interactive elements list. "
         "navigate: url=full URL (keep ?seed=X param). "
         "done: only when task is fully completed.\n"
+        "SUCCESS: Tasks are graded on backend events (form submit, booking, order). You must complete "
+        "the flow that fires that event—filling fields per CONSTRAINTS and clicking Submit/Book/Confirm. "
+        "Browsing carousels or clicking Next/Previous on hero sliders does NOT complete most tasks.\n"
+        "CAROUSEL/TRAP: Do NOT click carousel next/prev/home/logo unless the TASK explicitly asks to "
+        "browse slides. Prefer: forms, Book/Reserve/Submit, search bars, doctor/restaurant cards, "
+        "and in-app navigation that matches the TASK.\n"
         "RULES: Copy values EXACTLY from CREDENTIALS/CONSTRAINTS (include trailing spaces). "
         "equals->type exact value. not_equals->use any OTHER value. contains->find item with that substring. "
         "not_contains/not_in->find item WITHOUT that value. greater/less->numeric comparison.\n"
         "CREDENTIALS: username/email may have trailing spaces - type them exactly as shown in quotes.\n"
         "MULTI-STEP: complete login first, then the secondary action. Track progress in memory.\n"
         "TOOLS: Return {\"tool\":\"<name>\",\"args\":{...}} to inspect page. Max 1 tool per step. "
-        "Tools: list_cards({max_cards?,max_text?}); search_text({query}); list_links({}); extract_forms({}).\n"
+        "Tools: list_cards({max_cards?,max_text?}); search_text({query}); list_links({}); extract_forms({}). "
+        "Use extract_forms early if the task needs booking or multi-field forms.\n"
         "JSON ONLY. No explanation."
     )
 
@@ -26,6 +33,7 @@ def build_user_prompt(
     prompt: str,
     page_ir_text: str,
     step_index: int,
+    max_steps: int,
     task_type: str,
     action_history: list[str],
     website: str | None,
@@ -49,11 +57,12 @@ def build_user_prompt(
     # --- Core task context ---
     parts.append(f"TASK: {prompt}")
 
-    site_line = f"TYPE:{task_type} SITE:{website or 'unknown'} STEP:{step_index} of 10"
+    cap = max(1, int(max_steps))
+    site_line = f"TYPE:{task_type} SITE:{website or 'unknown'} STEP:{step_index} of {cap}"
     parts.append(site_line)
 
     # --- Urgency signal ---
-    remaining = max(1, 10 - step_index)
+    remaining = max(1, cap - step_index)
     if remaining <= 3:
         parts.append(f"WARNING: ONLY {remaining} STEPS LEFT - take the most direct action NOW.")
 
@@ -69,6 +78,10 @@ def build_user_prompt(
     # --- Constraints ---
     if constraints_block:
         parts.append(f"\n{constraints_block}")
+        parts.append(
+            "\nEVAL_HINT: Satisfy every constraint via the real UI flow (select fields, type text, then "
+            "Submit/Book/Confirm). action=done only after that flow is complete—not while still on a carousel or landing hero."
+        )
 
     # --- Playbook ---
     if playbook:

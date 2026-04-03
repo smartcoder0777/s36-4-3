@@ -299,6 +299,13 @@ async def handle_act(
     if repeat_count >= 2:
         extra_hint = "You appear stuck on the same URL after repeating an action. Choose a different element or scroll."
 
+    if state.constraints and step <= 4:
+        tool_nudge = (
+            "Structured constraints are present: prefer tool extract_forms (or list_cards) once "
+            "to see form fields before guessing clicks."
+        )
+        extra_hint = f"{extra_hint} | {tool_nudge}" if extra_hint else tool_nudge
+
     # Previous memory/next_goal
     prev_memory, prev_next_goal = StateTracker.get_memory(task)
 
@@ -337,6 +344,7 @@ async def handle_act(
             prompt=prompt,
             page_ir_text=page_ir_text,
             step_index=step,
+            max_steps=max_steps,
             task_type=state.task_type,
             action_history=action_history,
             website=website,
