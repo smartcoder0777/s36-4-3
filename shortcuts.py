@@ -107,6 +107,9 @@ def try_quick_click(prompt: str, url: str, seed: str | None, step: int) -> list[
                 rf"\b{view_name}\s+view\b", t, re.IGNORECASE
             ):
                 label_map = {"day": "Select Day view", "week": "Select Week view", "month": "Select Month view"}
+                if step == 0 and view_name == "day":
+                    # Many builds allow direct click without opening the selector first.
+                    return _click("aria-label", "Select Day view")
                 if step == 0:
                     return _click("id", "view-selector")
                 elif step == 1:
@@ -139,6 +142,10 @@ def try_quick_click(prompt: str, url: str, seed: str | None, step: int) -> list[
             return _click("id", "cart-icon")
         if re.search(r"wishlist", t):
             return _click("id", "wishlist-btn")
+
+    # AutoList add-task click (8011)
+    if port == 8011 and re.search(r"create\s+a\s+new\s+task|add\s+a\s+new\s+task", t):
+        return _click_xpath("//*[contains(@id,'add-task') or contains(@id,'new-task') or contains(.,'Add Task')]")
 
     # AutoLodge (8007): APPLY_FILTERS — rating + region dropdowns, then Apply (CheckEventTest APPLY_FILTERS).
     if port == 8007 and re.search(
@@ -213,6 +220,11 @@ def try_quick_click(prompt: str, url: str, seed: str | None, step: int) -> list[
             return _click_xpath("//button[contains(@id, 'add-label-btn') or contains(@id, 'add-label-button')]")
         # step >= 3: fall through to LLM
         return None
+
+    if port == 8005 and re.search(r"next\s+page\s+of\s+emails|move\s+forward.*emails", t):
+        return _click_xpath(
+            "//*[contains(@id,'next-page') or contains(@aria-label,'Next') or contains(., 'Next')]"
+        )
 
     # ADD_TO_CART_MODAL_OPEN (autodelivery 8006): type restaurant name into food search first
     if port == 8006 and re.search(r"add-to-cart modal|add\s+to\s+cart\s+modal", t):

@@ -254,6 +254,7 @@ TASK_PLAYBOOKS: dict[str, str] = {
     "VIEW_CART": "PLAYBOOK: 1) Click the **Cart** / **shopping cart** icon in the top nav (or go to /cart). 2) Wait until the cart page loads.",
     "PURCHASE": "PLAYBOOK: 1) Add the item to cart. 2) Navigate to cart. 3) Click checkout/purchase button. 4) Fill out purchase form. 5) Submit.",
     "CONTACT": "PLAYBOOK: 1) Navigate to the Contact page. 2) Fill in name, email, message fields with EXACT values. 3) Submit the form.",
+    "REGISTER": "PLAYBOOK: 1) Open Sign up/Register page. 2) Fill username/email/password from TASK_CONSTRAINTS or TASK_CREDENTIALS. 3) For source/not_equals rules, choose a valid option different from excluded values (and avoid 'None' unless explicitly required). 4) Submit registration.",
     "ADD_COMMENT": "PLAYBOOK: 1) Navigate to the specific item detail page. 2) Find the comment/review form. 3) Type the comment EXACTLY as specified. 4) Submit.",
     "LIST_ACTION": "PLAYBOOK: 1) Navigate to the item detail page. 2) Find the watchlist/reading-list button. 3) Click add or remove.",
     "SEARCH_LOCATION": "PLAYBOOK: 1) Find the search/destination input field. 2) Click to focus. 3) Type the destination EXACTLY as given (required for backend events). 4) Click the matching autocomplete result. 5) Submit/confirm if needed.",
@@ -309,6 +310,7 @@ TASK_PLAYBOOKS: dict[str, str] = {
     "UNFOLLOW_PAGE": "PLAYBOOK: 1) Find the company page. 2) Click Unfollow.",
     "CANCEL_APPLICATION": "PLAYBOOK: 1) Navigate to My Applications or Jobs. 2) Find the application matching constraints. 3) Click Withdraw/Cancel.",
     "SEARCH_USERS": "PLAYBOOK: 1) Find the user search bar. 2) Type the query. 3) Submit.",
+    "VIEW_USER_PROFILE": "PLAYBOOK: 1) Search/browse users. 2) Find user matching constraints. 3) Click user name/card/avatar to open profile details.",
     "BACK_TO_ALL_JOBS": "PLAYBOOK: 1) Navigate to Jobs section. 2) Find a job satisfying constraints. 3) Click on it. 4) Find and click Back to all jobs link.",
     "EDIT_PROFILE_BIO": "PLAYBOOK: 1) Navigate to Profile/Settings. 2) Find Bio field. 3) Set bio to EXACT value. 4) Save.",
     "HIRE_BTN_CLICKED": "PLAYBOOK: 1) Browse expert/consultant list. 2) Find expert matching ALL constraints. 3) Click Hire Now.",
@@ -343,6 +345,7 @@ TASK_PLAYBOOKS: dict[str, str] = {
     "OPEN_CHECKOUT_PAGE": "PLAYBOOK: 1) Find order matching constraints. 2) Navigate to checkout.",
     "SEARCH_RESTAURANT": "PLAYBOOK: 1) Find the restaurant search bar. 2) Type EXACT query. 3) Submit search.",
     "VIEW_RESTAURANT": "PLAYBOOK: 1) Browse restaurant listing cards. 2) Find restaurant matching ALL constraints. 3) Click on it to open detail page.",
+    "TAG_FILTER_SELECTED": "PLAYBOOK: 1) In restaurant list/search page, set search text and tag filter according to constraints. 2) Ensure selected tag/search satisfy contains/not_contains rules. 3) Apply/select filter.",
     "HELP_FAQ_TOGGLED": "PLAYBOOK: 1) Navigate to Help/FAQ page. 2) Find FAQ item NOT containing excluded text. 3) Click to expand.",
     "HELP_VIEWED": "PLAYBOOK: 1) Find Help or FAQ link in navigation. 2) Click it.",
     "ABOUT_FEATURE_CLICK": "PLAYBOOK: 1) Navigate to About page. 2) Find the feature card matching text. 3) Click on it.",
@@ -481,6 +484,8 @@ TASK_PLAYBOOKS: dict[str, str] = {
     "VOICE_MUTE_TOGGLE": "PLAYBOOK: 1) Join or select the **voice channel** matching **channel_name** and **server_name**. 2) Click the **mute** / microphone control to toggle mute.",
     "ADD_REACTION": "PLAYBOOK: 1) Open the **channel** (not_equals constraints). 2) Find the **message** not matching excluded **message_id**. 3) Hover message → **Add reaction** → pick emoji.",
     "EDIT_USER_BOOK": "PLAYBOOK: 1) **Login** with TASK_CREDENTIALS. 2) Go to profile / **My books**. 3) Find the book field to edit per task. 4) Save.",
+    "SETTINGS_APPEARANCE": "PLAYBOOK: 1) Open Settings. 2) Navigate to Appearance/Theme. 3) Choose the required theme (e.g. dark). 4) Save/apply if present.",
+    "DISCONNECT_WALLET": "PLAYBOOK: 1) Open wallet/account settings. 2) Locate wallet entry matching constraints. 3) Click Disconnect/Unlink. 4) Confirm if prompted.",
     "GENERAL": "PLAYBOOK: Success requires triggering the correct backend event (submit/book/order). Find forms or primary CTAs (Book, Reserve, Submit, Search) matching the TASK. Avoid hero carousels (next/prev slide) unless the task asks to browse slides. Avoid cycling the same marketing/nav href. Use TASK_CONSTRAINTS for field values.",
 }
 

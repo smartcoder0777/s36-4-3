@@ -20,6 +20,7 @@ Enhancements over baseline:
 from __future__ import annotations
 import json
 import os
+import re
 import logging
 from urllib.parse import urlparse
 
@@ -184,6 +185,66 @@ def _history_has_recent_timeout(history: list | None) -> bool:
     return False
 
 
+def _refine_task_type_with_website(
+    task_type: str, prompt: str, website: str | None, constraints: list
+) -> str:
+    """Website-aware remapping to avoid generic collisions across apps."""
+    t = (prompt or "").lower()
+    refined = task_type
+
+    if website == "autodining":
+        if refined == "REGISTRATION":
+            refined = "REGISTER"
+        if "tag" in t and "search" in t and "restaurant" in t:
+            refined = "TAG_FILTER_SELECTED"
+    elif website == "autostats":
+        if "disconnect" in t and "wallet" in t:
+            refined = "DISCONNECT_WALLET"
+    elif website == "autodiscord":
+        if "settings" in t and ("appearance" in t or "theme" in t):
+            refined = "SETTINGS_APPEARANCE"
+    elif website == "autoconnect":
+        if "profile" in t and any(k in t for k in ("view", "show", "open")):
+            refined = "VIEW_USER_PROFILE"
+    elif website == "autolist":
+        if refined == "CREATE_TASK":
+            # Event often expects opening the Add Task modal/button click.
+            refined = "AUTOLIST_ADD_TASK_CLICKED"
+
+    # If no extracted constraints and task is likely click-only, prefer event-specific type.
+    if not constraints and "switch to day view" in t:
+        refined = "SELECT_DAY"
+
+    return refined
+
+
+def _shortcut_actions_safe_for_page(actions: list[dict], snapshot_html: str | None) -> bool:
+    """Avoid stale hardcoded selectors that cause step timeouts."""
+    if not actions or not snapshot_html:
+        return True
+    html = snapshot_html.lower()
+    for act in actions:
+        if not isinstance(act, dict):
+            continue
+        sel = act.get("selector")
+        if not isinstance(sel, dict):
+            continue
+        stype = str(sel.get("type") or "").lower()
+        sval = str(sel.get("value") or "").strip()
+        if not sval:
+            continue
+        if stype == "attributevalueselector":
+            attr = str(sel.get("attribute") or "").lower()
+            if attr == "id" and f'id="{sval.lower()}"' not in html:
+                return False
+            if attr == "href" and sval.lower() not in html:
+                return False
+        elif stype == "xpathselector":
+            # Cannot validate xpath robustly without a parser; allow.
+            continue
+    return True
+
+
 def _get_llm_client() -> LLMClient:
     global _llm_client
     if _llm_client is None:
@@ -262,7 +323,9 @@ async def handle_act(
     # Initialize on step 0
     if step == 0:
         state.constraints = parse_constraints(prompt)
-        state.task_type = classify_task_type(prompt)
+        state.task_type = _refine_task_type_with_website(
+            classify_task_type(prompt), prompt, website, state.constraints
+        )
         state.login_done = False
         state.history.clear()
         state.filled_fields.clear()
@@ -295,9 +358,12 @@ async def handle_act(
     # ===================================================================
     quick = try_quick_click(prompt, url, seed, step)
     if quick is not None:
-        logger.info(f"Quick click: {len(quick)} actions")
-        _record_actions(task, quick, url, step)
-        return quick
+        if not _shortcut_actions_safe_for_page(quick, snapshot_html):
+            logger.info("Skipping shortcut due to selector not present on page")
+        else:
+            logger.info(f"Quick click: {len(quick)} actions")
+            _record_actions(task, quick, url, step)
+            return quick
 
     # ===================================================================
     # STAGE 2: Search shortcut

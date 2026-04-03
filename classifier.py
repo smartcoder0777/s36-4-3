@@ -324,6 +324,8 @@ def classify_task_type(prompt: str) -> str:
         return "VIEW_RESTAURANT"
     if re.search(r"show\s+details\s+for\s+(a|the)\s+restaurant", t, re.IGNORECASE):
         return "VIEW_RESTAURANT"
+    if re.search(r"tag\s+does\s+not\s+contain|tag\s+filter|search\s+contains", t, re.IGNORECASE):
+        return "TAG_FILTER_SELECTED"
 
     # ---- AutoShop (8002) ----
     if re.search(r"buy\s+now.*\bcheckout\b|proceed\s+with\s+checkout", t, re.IGNORECASE):
@@ -402,6 +404,8 @@ def classify_task_type(prompt: str) -> str:
     if re.search(r"register\s+with\s+the\s+following\s+username", t, re.IGNORECASE):
         return "REGISTRATION_BOOK"
     if re.search(r"show\s+details\s+for\s+a\s+book\s+where", t, re.IGNORECASE):
+        return "BOOK_DETAIL"
+    if re.search(r"go\s+to\s+the\s+book\s+details?\s+page\s+for\s+a\s+book", t, re.IGNORECASE):
         return "BOOK_DETAIL"
     if re.search(r"filter\s+books?\s+where", t, re.IGNORECASE):
         return "FILTER_BOOK"
@@ -507,6 +511,8 @@ def classify_task_type(prompt: str) -> str:
         return "POST_STATUS"
     if re.search(r"remove\s+post\s+where", t, re.IGNORECASE):
         return "REMOVE_POST"
+    if re.search(r"(view|open|show).*(user|profile).*(profile|details)", t, re.IGNORECASE):
+        return "VIEW_USER_PROFILE"
 
     # ---- AutoHire (8009) additional ----
     if re.search(r"edit\s+profile\s+title\s+where", t, re.IGNORECASE):
@@ -607,6 +613,10 @@ def classify_task_type(prompt: str) -> str:
         return "VOICE_MUTE_TOGGLE"
     if re.search(r"add\s+a\s+reaction\s+to\s+a\s+message", t, re.IGNORECASE):
         return "ADD_REACTION"
+    if re.search(r"(settings|appearance).*(theme|dark|light)", t, re.IGNORECASE):
+        return "SETTINGS_APPEARANCE"
+    if re.search(r"disconnect\s+the\s+wallet", t, re.IGNORECASE):
+        return "DISCONNECT_WALLET"
 
     # ---- Generic fallbacks ----
     if re.search(r"\b(register|sign.?up|create.*account|fill.*registration)\b", t):
