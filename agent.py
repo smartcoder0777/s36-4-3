@@ -21,6 +21,7 @@ from __future__ import annotations
 import json
 import os
 import logging
+from urllib.parse import urlparse
 
 from config import (
     detect_website,
@@ -72,12 +73,30 @@ def _candidate_selector_value(c) -> str:
     return ""
 
 
+def _normalize_selector_value_for_compare(raw: str) -> str:
+    """Treat /subnets?seed=1 and /subnets?seed=2 as the same for repeat guards (nav loops)."""
+    s = (raw or "").strip()
+    if not s:
+        return ""
+    if s.startswith("http"):
+        p = urlparse(s)
+        path = (p.path or "").lower().rstrip("/")
+        return path if path else "/"
+    if s.startswith("/"):
+        return s.split("?")[0].lower().rstrip("/") or "/"
+    return s
+
+
 def _pick_click_avoiding_selector_value(candidates: list, avoid: str) -> int | None:
-    """Pick first candidate whose selector value differs from *avoid* (break repeat-click loops)."""
+    """Pick first candidate whose normalized selector value differs from *avoid* (break repeat-click loops)."""
     if not (avoid or "").strip():
         return None
+    avoid_key = _normalize_selector_value_for_compare(avoid)
+    if not avoid_key:
+        return None
     for i, c in enumerate(candidates):
-        if _candidate_selector_value(c) != avoid:
+        v = _candidate_selector_value(c)
+        if _normalize_selector_value_for_compare(v) != avoid_key:
             return i
     return None
 
@@ -95,6 +114,55 @@ def _history_no_progress(history: list | None) -> bool:
         except Exception:
             continue
     return True
+
+
+def _extra_hints_for_site_and_constraints(constraints: list, website: str | None) -> str:
+    """Targeted nudges for eval failures (ride location/time, subnet nav loops)."""
+    hints: list[str] = []
+    if website == "autostats":
+        hints.append(
+            "Do not loop on /subnets or identical marketing links unless the TASK names subnets/Bittensor—"
+            "follow the TASK (search, forms, specific CTAs)."
+        )
+    if website != "autodrive" or not constraints:
+        return " | ".join(hints)
+    seen_time = False
+    seen_loc = False
+    for c in constraints:
+        fname = (c.field or "").lower()
+        op = (c.operator or "").lower()
+        if not seen_time and fname in (
+            "time",
+            "pickup_time",
+            "trip_time",
+            "scheduled_time",
+        ) and op in (
+            "greater_than",
+            "greater_than_or_equal",
+            "equals",
+            "less_than",
+            "less_than_or_equal",
+        ):
+            hints.append(
+                "Set the trip time in the time picker so it satisfies the time constraint (e.g. after 17:00)."
+            )
+            seen_time = True
+        if not seen_loc and fname in (
+            "location",
+            "pickup",
+            "destination",
+            "pickup_location",
+            "dropoff",
+            "address",
+        ):
+            hints.append(
+                "Type real addresses in pickup/destination fields and pick an autocomplete result—"
+                "click-only focus does not emit a valid location event."
+            )
+            seen_loc = True
+        if seen_time and seen_loc:
+            break
+    return " | ".join(hints)
 
 
 def _history_has_recent_timeout(history: list | None) -> bool:
@@ -326,6 +394,10 @@ async def handle_act(
         )
         extra_hint = f"{extra_hint} | {tool_nudge}" if extra_hint else tool_nudge
 
+    site_c_hint = _extra_hints_for_site_and_constraints(state.constraints, website)
+    if site_c_hint:
+        extra_hint = f"{extra_hint} | {site_c_hint}" if extra_hint else site_c_hint
+
     # Previous memory/next_goal
     prev_memory, prev_next_goal = StateTracker.get_memory(task)
 
@@ -472,7 +544,12 @@ async def handle_act(
         if act0 == "click" and isinstance(cid0, int) and 0 <= cid0 < len(candidates):
             last_sv = StateTracker.get_last_click_selector_value(task)
             upcoming_sv = _candidate_selector_value(candidates[cid0])
-            if last_sv and upcoming_sv and last_sv == upcoming_sv:
+            same = bool(last_sv and upcoming_sv) and (
+                last_sv == upcoming_sv
+                or _normalize_selector_value_for_compare(last_sv)
+                == _normalize_selector_value_for_compare(upcoming_sv)
+            )
+            if same:
                 alt = _pick_click_avoiding_selector_value(candidates, upcoming_sv)
                 if alt is not None:
                     logger.info("Overriding repeat click on selector value=%s -> candidate_id=%s", upcoming_sv, alt)

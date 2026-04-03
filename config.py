@@ -174,10 +174,11 @@ WEBSITE_HINTS: dict[str, str] = {
     "autodrive": (
         "SITE: Ride-sharing app (Uber-style). "
         "Main page: Location (pickup) input + Destination input fields. "
+        "You must TYPE addresses into those fields and select a matching suggestion—clicking the field alone is not enough. "
         "Available rides: list with ride_name, price, estimated time, scheduled. "
         "Reserve button on each ride card. "
         "Date picker: select trip date (calendar widget). "
-        "Time picker: select trip time. "
+        "Time picker: select trip time; if constraints say time after/before a clock value, open the picker and choose a valid slot. "
         "Search location: type in the search/destination input box. "
         "Reservation history: list of upcoming/past rides with Cancel button. "
         "Cancel: click Cancel on a specific reservation. "
@@ -195,8 +196,10 @@ WEBSITE_HINTS: dict[str, str] = {
         "Contact doctor form: opens when Contact button clicked on doctor card."
     ),
     "autostats": (
-        "Analytics dashboard. Charts, data tables, filter controls, export options. "
-        "Date range selectors, metric dropdowns."
+        "Bittensor/marketing-style site: hero, charts, and many links to /subnets and ecosystem pages. "
+        "Do not repeatedly click the same subnet nav link unless the TASK explicitly asks about subnets. "
+        "Prefer: search bars, task-specific buttons, forms, and flows named in the TASK prompt. "
+        "Charts, data tables, filter controls, export options, date range selectors."
     ),
     "autodiscord": (
         "Chat application. Server list, channels, messages, user search, "
@@ -235,11 +238,11 @@ TASK_PLAYBOOKS: dict[str, str] = {
     "CONTACT": "PLAYBOOK: 1) Navigate to the Contact page. 2) Fill in name, email, message fields with EXACT values. 3) Submit the form.",
     "ADD_COMMENT": "PLAYBOOK: 1) Navigate to the specific item detail page. 2) Find the comment/review form. 3) Type the comment EXACTLY as specified. 4) Submit.",
     "LIST_ACTION": "PLAYBOOK: 1) Navigate to the item detail page. 2) Find the watchlist/reading-list button. 3) Click add or remove.",
-    "SEARCH_LOCATION": "PLAYBOOK: 1) Find the search/destination input field. 2) Click it to focus. 3) Type the destination EXACTLY as given. 4) Click the matching result. 5) Submit/confirm if needed.",
-    "RESERVE_RIDE": "PLAYBOOK: 1) Browse available rides. 2) Use list_cards to see all rides. 3) Find the ride matching ALL TASK_CONSTRAINTS. 4) Click Reserve on the matching ride.",
+    "SEARCH_LOCATION": "PLAYBOOK: 1) Find the search/destination input field. 2) Click to focus. 3) Type the destination EXACTLY as given (required for backend events). 4) Click the matching autocomplete result. 5) Submit/confirm if needed.",
+    "RESERVE_RIDE": "PLAYBOOK: 1) Fill pickup and destination with typed addresses (and time/date if shown) so constraints hold. 2) Browse available rides (list_cards if needed). 3) Find the ride matching ALL TASK_CONSTRAINTS. 4) Click Reserve on the matching ride.",
     "CANCEL_RESERVATION": "PLAYBOOK: 1) Navigate to reservations/upcoming rides page. 2) Find the reservation matching ALL TASK_CONSTRAINTS. 3) Click Cancel. 4) Confirm if prompted.",
     "SELECT_DATE": "PLAYBOOK: 1) Find the date picker/calendar widget. 2) Click it to open. 3) Select a date satisfying TASK_CONSTRAINTS. 4) Confirm the selection.",
-    "SELECT_TIME": "PLAYBOOK: 1) Find the time picker/dropdown. 2) Click to open. 3) Select a time satisfying the constraint. 4) Confirm.",
+    "SELECT_TIME": "PLAYBOOK: 1) Find the time picker/dropdown. 2) Click to open. 3) Select a clock time that satisfies TASK_CONSTRAINTS (e.g. strictly after 17:00 for greater_than). 4) Confirm. Do not assume the default time is valid.",
     "NEXT_PICKUP": "PLAYBOOK: 1) Look for a Next Pickup or scheduled ride section. 2) Find the pickup satisfying date/time constraints. 3) Click to view details.",
     "STAR_AN_EMAIL": "PLAYBOOK: 1) Browse the inbox email list. 2) Find the email matching ALL constraints. 3) Click the Star icon on that email row.",
     "ARCHIVE_EMAIL": "PLAYBOOK: 1) Browse the inbox. 2) Find email matching constraints. 3) Click on that email. 4) Find Archive button. Click it.",
@@ -336,8 +339,8 @@ TASK_PLAYBOOKS: dict[str, str] = {
     "SORT_MATTER_BY_CREATED_AT": "PLAYBOOK: 1) Navigate to Matters list. 2) Find the created_at column header. 3) Click it to sort.",
     "CHANGE_USER_NAME": "PLAYBOOK: 1) Navigate to Settings or Profile. 2) Find the user name field. 3) Set it to the specified value. 4) Save.",
     "WRITE_JOB_TITLE": "PLAYBOOK: 1) Look for Post a Job or + button. 2) Click it. 3) Type the EXACT job title from TASK_CREDENTIALS. 4) Do NOT click submit.",
-    "ENTER_DESTINATION": "PLAYBOOK: 1) Find the destination input field. 2) Click to focus. 3) Clear if pre-filled. 4) Type a valid destination DIFFERENT from the NOT constraint. 5) Confirm.",
-    "ENTER_LOCATION": "PLAYBOOK: 1) Find the location/pickup input field. 2) Click to focus. 3) Type the EXACT location from TASK_CONSTRAINTS. 4) Click matching autocomplete suggestion. 5) Confirm.",
+    "ENTER_DESTINATION": "PLAYBOOK: 1) Find the destination input field. 2) Click to focus. 3) Clear if pre-filled. 4) Type a valid destination DIFFERENT from the NOT constraint (typing is mandatory). 5) Confirm.",
+    "ENTER_LOCATION": "PLAYBOOK: 1) Find the location/pickup input field. 2) Click to focus. 3) Type the EXACT location from TASK_CONSTRAINTS in the same step or immediately after—never stop at focus-only. 4) Click matching autocomplete suggestion. 5) Confirm.",
     "SEARCH_RIDE": "PLAYBOOK: 1) On AutoRide, find the ride search/filter interface. 2) Apply filters or scroll to find ride matching ALL constraints. 3) Click on matching ride.",
     "MARK_AS_SPAM": "PLAYBOOK: 1) Browse the inbox. 2) Find email matching ALL constraints. 3) Click on it or select it. 4) Find Mark as Spam button. 5) Click it.",
     "MARK_AS_UNREAD": "PLAYBOOK: 1) Browse the inbox email list. 2) Find email matching ALL constraints. 3) Click or use menu. 4) Click Mark as Unread.",
@@ -440,7 +443,7 @@ TASK_PLAYBOOKS: dict[str, str] = {
     "EDIT_TASK": "PLAYBOOK: 1) Find task matching constraints. 2) Click Edit. 3) Update fields. 4) Save.",
     "COMPLETE_TASK": "PLAYBOOK: 1) Find task matching constraints. 2) Click Complete/Done/Checkmark.",
     "JOB_POSTING": "PLAYBOOK: 1) Find Post a Job button. 2) Click it. 3) Type EXACT job title. 4) Submit.",
-    "GENERAL": "PLAYBOOK: Success requires triggering the correct backend event (submit/book/order). Find forms or primary CTAs (Book, Reserve, Submit, Search) matching the TASK. Avoid hero carousels (next/prev slide) unless the task asks to browse slides. Use TASK_CONSTRAINTS for field values.",
+    "GENERAL": "PLAYBOOK: Success requires triggering the correct backend event (submit/book/order). Find forms or primary CTAs (Book, Reserve, Submit, Search) matching the TASK. Avoid hero carousels (next/prev slide) unless the task asks to browse slides. Avoid cycling the same marketing/nav href. Use TASK_CONSTRAINTS for field values.",
 }
 
 # ---------------------------------------------------------------------------
