@@ -189,6 +189,47 @@ def extract_credentials(prompt: str) -> dict[str, str]:
     return creds
 
 
+def extract_apply_job_title_and_location(prompt: str) -> tuple[str | None, str | None]:
+    """e.g. job title 'Data Analyst' located in 'Philadelphia, PA'."""
+    m = re.search(
+        r"job\s+title\s+['\"]([^'\"]+)['\"].{0,120}?located\s+in\s+['\"]([^'\"]+)['\"]",
+        prompt,
+        re.IGNORECASE | re.DOTALL,
+    )
+    if m:
+        return m.group(1).strip(), m.group(2).strip()
+    m = re.search(
+        r"title\s+['\"]([^'\"]+)['\"].{0,120}?located\s+in\s+['\"]([^'\"]+)['\"]",
+        prompt,
+        re.IGNORECASE | re.DOTALL,
+    )
+    if m:
+        return m.group(1).strip(), m.group(2).strip()
+    return None, None
+
+
+def extract_title_contains_substring(prompt: str) -> str | None:
+    """e.g. 'title of the job that contains gineers' — substring for WRITE_JOB_TITLE."""
+    m = re.search(
+        r"title\s+of\s+the\s+job\s+that\s+contains\s+['\"]([^'\"]+)['\"]",
+        prompt,
+        re.IGNORECASE,
+    )
+    if m:
+        return m.group(1).strip()
+    m = re.search(
+        r"(?:writing|write|strong)\s+.*?title.*?contains\s+['\"]([^'\"]+)['\"]",
+        prompt,
+        re.IGNORECASE,
+    )
+    if m:
+        return m.group(1).strip()
+    m = re.search(r"contains\s+['\"]([^'\"]+)['\"]", prompt, re.IGNORECASE)
+    if m and re.search(r"title|job|posting", prompt, re.IGNORECASE):
+        return m.group(1).strip()
+    return None
+
+
 def extract_search_query(prompt: str) -> str | None:
     """Extract search query from task prompt."""
     constraints = parse_constraints(prompt)

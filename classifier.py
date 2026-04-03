@@ -346,6 +346,8 @@ def classify_task_type(prompt: str) -> str:
         return "DELETE_CLIENT"
     if re.search(r"add\s+a\s+new\s+client", t, re.IGNORECASE):
         return "ADD_CLIENT"
+    if re.search(r"update\s+the\s+matter", t, re.IGNORECASE):
+        return "UPDATE_MATTER"
     if re.search(r"add\s+a\s+new\s+matter", t, re.IGNORECASE):
         return "ADD_NEW_MATTER"
     if re.search(r"search\s+for\s+matters?\s+where\s+the\s+query", t, re.IGNORECASE):

@@ -90,6 +90,10 @@ WEBSITE_HINTS: dict[str, str] = {
     ),
     "autocrm": (
         "SITE: Legal case management + calendar. NAV: Dashboard, Matters, Clients, Calendar. "
+        "MATTERS: Table rows show name, client, status, updated (e.g. '4d ago'). Click a row OR use row action "
+        "(Revise Matter, Amend Project, aria-label edit) to open the matter editor. "
+        "UPDATE MATTER: find the single row matching ALL constraints (name contains, client not_equals, updated, status), "
+        "open it, change Status dropdown to the required value (e.g. Archived), click Save/Submit—UPDATE_MATTER must fire. "
         "Matters list: sortable columns. Add New Matter button. "
         "Clients list: rows show name, email, status, matters, last activity; click a row to open client detail. "
         "DELETE CLIENT: open Clients, find the row matching ALL TASK_CONSTRAINTS (not_contains/not_equals on name/email/etc.), "
@@ -138,6 +142,8 @@ WEBSITE_HINTS: dict[str, str] = {
     "autoconnect": (
         "SITE: Professional network (LinkedIn-style). NAV: Feed, Jobs, People, Company Pages. "
         "Feed: posts with text, author, Like/Comment buttons. Comment: text field + submit. "
+        "APPLY FOR JOB: Open **Jobs** tab, use search/filter so listing matches **job_title** AND **location** from constraints, "
+        "click the job to open detail, then click **Apply**—required for APPLY_FOR_JOB event. "
         "Jobs section: job listings with title, company, location, Apply button. "
         "My Applications: list with status (Pending/Accepted/Rejected), Withdraw/Cancel button. "
         "Company Pages: Follow/Unfollow button on each page. "
@@ -147,6 +153,8 @@ WEBSITE_HINTS: dict[str, str] = {
     ),
     "autowork": (
         "SITE: Freelancer hiring platform. NAV: Jobs, Hires, Experts/Browse. "
+        "WRITE JOB TITLE: Click **Post a Job** first; in the modal, type a **job title** whose text **contains** the "
+        "required substring from constraints (e.g. 'gineers' inside 'Engineers')—WRITE_JOB_TITLE fires from that field. "
         "Expert/Consultant cards: name, role, country, rating, price. "
         "Expert actions: Hire Now button, Hire Later button, View Profile. "
         "Hire Later page: list of saved experts with Remove button. "
@@ -346,7 +354,10 @@ TASK_PLAYBOOKS: dict[str, str] = {
     "ADD_NEW_MATTER": "PLAYBOOK: 1) Navigate to Matters section. 2) Click Add New Matter. 3) Fill form. 4) Save.",
     "SORT_MATTER_BY_CREATED_AT": "PLAYBOOK: 1) Navigate to Matters list. 2) Find the created_at column header. 3) Click it to sort.",
     "CHANGE_USER_NAME": "PLAYBOOK: 1) Navigate to Settings or Profile. 2) Find the user name field. 3) Set it to the specified value. 4) Save.",
-    "WRITE_JOB_TITLE": "PLAYBOOK: 1) Look for Post a Job or + button. 2) Click it. 3) Type the EXACT job title from TASK_CREDENTIALS. 4) Do NOT click submit.",
+    "WRITE_JOB_TITLE": "PLAYBOOK: 1) Click **Post a Job** (navbar, dashboard, or floating CTA) to open the posting form/modal. "
+    "2) Find the job title / position title input. 3) Type a title that CONTAINS the required substring from CONSTRAINTS "
+    "(e.g. contains 'gineers' → type 'Senior Engineers' or 'Engineers'—the substring must appear in the field). "
+    "4) Do not close the form before typing. 5) Do not submit unless the task asks to publish.",
     "ENTER_DESTINATION": "PLAYBOOK: 1) Find the destination input field. 2) Click to focus. 3) Clear if pre-filled. 4) Type a valid destination DIFFERENT from the NOT constraint (typing is mandatory). 5) Confirm.",
     "ENTER_LOCATION": "PLAYBOOK: 1) Find the location/pickup input field. 2) Click to focus. 3) Type the EXACT location from TASK_CONSTRAINTS in the same step or immediately after—never stop at focus-only. 4) Click matching autocomplete suggestion. 5) Confirm.",
     "SEARCH_RIDE": "PLAYBOOK: 1) On AutoRide, find the ride search/filter interface. 2) Apply filters or scroll to find ride matching ALL constraints. 3) Click on matching ride.",
@@ -366,7 +377,9 @@ TASK_PLAYBOOKS: dict[str, str] = {
     "HOME_NAVBAR": "PLAYBOOK: 1) Find navigation bar. 2) Click Home tab/link.",
     "VIEW_HIDDEN_POSTS": "PLAYBOOK: 1) Go to profile or settings. 2) Find Hidden Posts section. 3) Navigate to it.",
     "SEARCH_JOBS": "PLAYBOOK: 1) Find Jobs section. 2) Find search input. 3) Type query satisfying constraints. 4) Submit.",
-    "APPLY_FOR_JOB": "PLAYBOOK: 1) Browse job listings. 2) Find job matching ALL constraints. 3) Click to open. 4) Click Apply.",
+    "APPLY_FOR_JOB": "PLAYBOOK: 1) Open **Jobs** from navbar or /jobs if needed. 2) Use search/filter so **job title** AND "
+    "**location** (city/state) from CONSTRAINTS match one listing. 3) Click that job card/row to open detail. "
+    "4) Click **Apply** (or Easy Apply)—the APPLY_FOR_JOB event requires this click after the right job is open.",
     "SEARCH_SUBMIT": "PLAYBOOK: 1) Find search input. 2) Type query from TASK_CONSTRAINTS. 3) Submit.",
     "EVENT_WIZARD_OPEN": "PLAYBOOK: 1) Find Add Event button. 2) Click it to open wizard. 3) If title field appears, type title satisfying constraints.",
     "CELL_CLICKED": "PLAYBOOK: 1) Switch to 5 days view. 2) Find a cell matching date/time constraints. 3) Click on that cell.",
@@ -398,6 +411,10 @@ TASK_PLAYBOOKS: dict[str, str] = {
     "BILLING_SEARCH": "PLAYBOOK: 1) Navigate to Billing section. 2) Find search/filter inputs. 3) Enter query. 4) Select date_filter satisfying constraints. 5) Apply.",
     "LOG_EDITED": "PLAYBOOK: 1) Navigate to Logs/Time entries. 2) Find log entry matching constraints. 3) Click Edit. 4) Make change. 5) Save.",
     "ARCHIVE_MATTER": "PLAYBOOK: 1) Navigate to Matters. 2) Find matter satisfying constraints. 3) Click Archive. 4) Confirm.",
+    "UPDATE_MATTER": "PLAYBOOK: 1) Go to **Matters** (/matters). 2) Scan rows for the ONE matter matching ALL CONSTRAINTS "
+    "(name contains substring, client not_equals, updated column, current status if listed). 3) Click the row or "
+    "**Revise Matter** / edit action to open the editor. 4) Set **Status** to the required value (e.g. Archived) in the dropdown. "
+    "5) Click **Save** or **Submit** so UPDATE_MATTER fires. Do not stop after opening the list.",
     "VIEW_CLIENT_DETAILS": "PLAYBOOK: 1) Navigate to Clients. 2) Find client matching constraints. 3) Click to open details.",
     "VIEW_MATTER_DETAILS": "PLAYBOOK: 1) Navigate to Matters. 2) Find matter matching constraints. 3) Click to open details.",
     "SEND_EMAIL": "PLAYBOOK: 1) Click Compose/New Email. 2) Fill To, Subject, Body satisfying constraints. 3) Click Send.",

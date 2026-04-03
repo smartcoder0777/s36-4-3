@@ -34,6 +34,8 @@ from constraint_parser import (
     parse_constraints,
     format_constraints_block,
     extract_credentials,
+    extract_apply_job_title_and_location,
+    extract_title_contains_substring,
     forbidden_not_equals_location_strings,
 )
 from html_parser import prune_html, extract_candidates, build_page_ir, build_dom_digest
@@ -420,6 +422,24 @@ async def handle_act(
     for c in state.constraints:
         if c.operator == "equals" and isinstance(c.value, str):
             creds.setdefault(c.field, c.value)
+    # Job flows: substring for title typing; explicit fields if parsed
+    for c in state.constraints:
+        if c.field == "query" and c.operator == "contains" and isinstance(c.value, str):
+            v = c.value.strip()
+            if v:
+                creds.setdefault("job_title_must_contain", v)
+        if c.field in ("job_title", "location") and c.operator == "equals" and isinstance(c.value, str):
+            creds.setdefault(c.field, str(c.value).strip())
+    if state.task_type == "WRITE_JOB_TITLE":
+        sub = extract_title_contains_substring(prompt)
+        if sub:
+            creds.setdefault("job_title_must_contain", sub)
+    if state.task_type == "APPLY_FOR_JOB":
+        jt, loc = extract_apply_job_title_and_location(prompt)
+        if jt:
+            creds.setdefault("job_title", jt)
+        if loc:
+            creds.setdefault("location", loc)
 
     creds_block = ""
     if creds:
