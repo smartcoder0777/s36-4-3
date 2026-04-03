@@ -10,6 +10,8 @@ import re
 def classify_task_type(prompt: str) -> str:
     """Return a specific task type label for the given prompt."""
     t = prompt.lower()
+    if re.search(r"(authenticate|login|sign.?in).*(add|create)\s+a\s+book", t, re.IGNORECASE):
+        return "LOGIN_THEN_ADD_ITEM"
 
     # ---- AutoRide (8012) ----
     if re.search(r"(enter|type)\s+destination", t, re.IGNORECASE):
@@ -316,6 +318,8 @@ def classify_task_type(prompt: str) -> str:
         return "HELP_FAQ_TOGGLED"
     if re.search(r"open\s+the\s+help", t, re.IGNORECASE):
         return "HELP_VIEWED"
+    if re.search(r"special\s+occasion|occasion\s+for\s+a\s+booking|select\s+an?\s+occasion", t, re.IGNORECASE):
+        return "OCCASION_SELECTED"
     if re.search(r"click\s+on\s+the\s+feature.*on\s+the\s+about\s+page", t, re.IGNORECASE):
         return "ABOUT_FEATURE_CLICK"
     if re.search(r"contact\s+support\s+regarding", t, re.IGNORECASE):
@@ -523,6 +527,8 @@ def classify_task_type(prompt: str) -> str:
         return "NAVBAR_EXPERTS_CLICK"
     if re.search(r"show\s+the\s+list\s+of\s+all\s+experts", t, re.IGNORECASE):
         return "NAVBAR_EXPERTS_CLICK"
+    if re.search(r"favorite\s+expert|select\s+favorite\s+expert", t, re.IGNORECASE):
+        return "FAVORITE_EXPERT_SELECTED"
     if re.search(r"add\s+a\s+skill\s+where\s+skill", t, re.IGNORECASE):
         return "ADD_SKILL"
     if re.search(r"submit\s+a\s+job\s+with\s+title", t, re.IGNORECASE):

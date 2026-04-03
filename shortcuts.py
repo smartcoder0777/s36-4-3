@@ -143,9 +143,27 @@ def try_quick_click(prompt: str, url: str, seed: str | None, step: int) -> list[
         if re.search(r"wishlist", t):
             return _click("id", "wishlist-btn")
 
+    # View cart (autobooks 8001)
+    if port == 8001 and re.search(r"shopping\s+cart|view\s+the\s+shopping\s+cart|cart\s+contents", t):
+        return _click_xpath("//*[contains(@id,'cart') or contains(@href,'/cart') or contains(.,'Cart')]")
+
+    # Add book (autobooks 8001)
+    if port == 8001 and re.search(r"(add|create)\s+a\s+book", t):
+        return _click_xpath("//*[contains(@id,'add-book') or contains(@id,'new-book') or contains(.,'Add Book')]")
+
+    # Help viewed (generic help nav)
+    if re.search(r"\bhelp\s+page\b|open\s+the\s+help", t):
+        return _click_xpath("//*[contains(@id,'help') or contains(@href,'help') or contains(.,'Help') or contains(.,'FAQ')]")
+
     # AutoList add-task click (8011)
     if port == 8011 and re.search(r"create\s+a\s+new\s+task|add\s+a\s+new\s+task", t):
         return _click_xpath("//*[contains(@id,'add-task') or contains(@id,'new-task') or contains(.,'Add Task')]")
+    if port == 8011 and re.search(r"cancel\s+the\s+task\s+creation|cancel\s+creating\s+the\s+task", t):
+        if step == 0:
+            return _click_xpath("//*[contains(@id,'add-task') or contains(@id,'new-task') or contains(.,'Add Task')]")
+        if step == 1:
+            return _click_xpath("//*[contains(@id,'cancel') or contains(.,'Cancel') or contains(.,'Discard')]")
+        return None
 
     # AutoLodge (8007): APPLY_FILTERS — rating + region dropdowns, then Apply (CheckEventTest APPLY_FILTERS).
     if port == 8007 and re.search(
@@ -190,6 +208,26 @@ def try_quick_click(prompt: str, url: str, seed: str | None, step: int) -> list[
                      "contains(@placeholder, 'Enter pickup') or "
                      "contains(@placeholder, 'Start location') or "
                      "contains(@placeholder, 'Where are you?')]")
+        m_time = re.search(r"time\s+for\s+my\s+trip\s+to\s+be\s+at\s+['\"]([^'\"]+)['\"]", prompt, re.IGNORECASE)
+        if m_time:
+            time_val = m_time.group(1).strip()
+            # Convert 22:00:00 -> 10:00 PM when needed.
+            m24 = re.match(r"^(\d{1,2}):(\d{2})(?::\d{2})?$", time_val)
+            if m24:
+                hh = int(m24.group(1))
+                mm = m24.group(2)
+                ap = "AM" if hh < 12 else "PM"
+                hh12 = hh % 12 or 12
+                time_val = f"{hh12}:{mm} {ap}"
+            if step == 0:
+                return _click_xpath(
+                    "//input[contains(@id,'time') or contains(@placeholder,'time') or contains(@aria-label,'time')]"
+                )
+            if step == 1:
+                return _click_xpath(
+                    f"//*[contains(@id,'time-option') and contains(., '{time_val}') or contains(., '{time_val}')]"
+                )
+            return None
         if "search location" in t:
             m2 = re.search(r"(?:for |details for )['\"]([^'\"]+)['\"]", prompt)
             if m2:
@@ -237,6 +275,8 @@ def try_quick_click(prompt: str, url: str, seed: str | None, step: int) -> list[
                     "selector": _sel_attr("id", "find-food"),
                 }
             ]
+        if step == 1:
+            return _click_xpath("//*[contains(@id,'restaurant-card') or contains(@id,'restaurant-item')][1]")
         return None
 
     # Reserve hotel (autolodge 8007): type destination into main search first
@@ -250,6 +290,8 @@ def try_quick_click(prompt: str, url: str, seed: str | None, step: int) -> list[
                     "selector": _sel_attr("id", "submit-query"),
                 }
             ]
+        if step == 1:
+            return _click_xpath("//*[contains(@class,'property-card-link') or contains(@id,'property-card-link')][1]")
         return None
 
     # Search delivery restaurant (autodelivery 8006)

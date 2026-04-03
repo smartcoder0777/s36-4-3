@@ -245,6 +245,22 @@ def _shortcut_actions_safe_for_page(actions: list[dict], snapshot_html: str | No
     return True
 
 
+def _extract_use_case_hint(prompt: str, relevant_data: dict | None) -> str | None:
+    """Extract explicit use-case/event token when available."""
+    if isinstance(relevant_data, dict):
+        for k in ("use_case", "useCase", "event_name", "eventName"):
+            v = relevant_data.get(k)
+            if isinstance(v, str) and v.strip():
+                token = v.strip().upper()
+                if token in TASK_PLAYBOOKS:
+                    return token
+    for m in re.finditer(r"'([A-Z][A-Z0-9_]{3,})'", prompt or ""):
+        token = m.group(1).strip().upper()
+        if token in TASK_PLAYBOOKS:
+            return token
+    return None
+
+
 def _get_llm_client() -> LLMClient:
     global _llm_client
     if _llm_client is None:
@@ -326,6 +342,9 @@ async def handle_act(
         state.task_type = _refine_task_type_with_website(
             classify_task_type(prompt), prompt, website, state.constraints
         )
+        uc = _extract_use_case_hint(prompt, relevant_data)
+        if uc:
+            state.task_type = uc
         state.login_done = False
         state.history.clear()
         state.filled_fields.clear()
