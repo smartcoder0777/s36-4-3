@@ -4,7 +4,10 @@ Combines the best patterns from OJO Agent (300+ patterns) and Onyxdrift
 (span-overlap dedup) for robust constraint parsing.
 """
 from __future__ import annotations
+import os
 import re
+from urllib.parse import parse_qs, urlparse
+
 from models import Constraint
 
 # Field name pattern: word_chars possibly with underscores
@@ -165,8 +168,17 @@ def format_constraints_block(constraints: list[Constraint]) -> str:
 def extract_credentials(prompt: str) -> dict[str, str]:
     """Pull literal credential values and well-known placeholders from task text."""
     creds: dict[str, str] = {}
+    # "username equals '...'" (eval phrasing)
+    m = re.search(r"username\s+equals\s+['\"]([^'\"]+)['\"]", prompt, re.IGNORECASE)
+    if m:
+        creds["username"] = m.group(1).strip()
+    m = re.search(r"password\s+equals\s+['\"]([^'\"]+)['\"]", prompt, re.IGNORECASE)
+    if m:
+        creds["password"] = m.group(1).strip()
     # Explicit credentials in prompt
     for field in ("username", "password", "email"):
+        if field in creds and field in ("username", "password"):
+            continue
         m = re.search(
             rf"{field}\s*[:=]\s*['\"]?([^'\"\n,]+)['\"]?", prompt, re.IGNORECASE
         )
@@ -187,6 +199,67 @@ def extract_credentials(prompt: str) -> dict[str, str]:
     creds.setdefault("email", "<signup_email>")
 
     return creds
+
+
+def expand_credential_placeholders(creds: dict[str, str], url: str) -> dict[str, str]:
+    """Replace <web_agent_id> and user<web_agent_id> using URL ?web_agent_id= or env."""
+    qs = parse_qs(urlparse(url).query)
+    wid: str | None = None
+    for key in ("web_agent_id", "X-WebAgent-Id", "WebAgentId"):
+        vals = qs.get(key) or qs.get(key.lower())
+        if vals and str(vals[0]).strip():
+            wid = str(vals[0]).strip()
+            break
+    if not wid:
+        wid = os.getenv("WEB_AGENT_ID", "1")
+    out: dict[str, str] = {}
+    for k, v in creds.items():
+        if not isinstance(v, str):
+            out[k] = v
+            continue
+        s = v.replace("<web_agent_id>", wid)
+        s = re.sub(r"user\s*<\s*web_agent_id\s*>", f"user{wid}", s, flags=re.IGNORECASE)
+        out[k] = s
+    return out
+
+
+def extract_delivery_modal_hints(prompt: str) -> dict[str, str]:
+    """ADD_TO_CART_MODAL_OPEN: restaurant, optional min price / item contains."""
+    hints: dict[str, str] = {}
+    m = re.search(r"restaurant\s+equals\s+['\"]([^'\"]+)['\"]", prompt, re.IGNORECASE)
+    if m:
+        hints["restaurant"] = m.group(1).strip()
+    m = re.search(
+        r"price\s+is\s+greater\s+than\s+['\"]?([0-9.]+)",
+        prompt,
+        re.IGNORECASE,
+    )
+    if m:
+        hints["min_price"] = m.group(1).strip()
+    m = re.search(
+        r"(?:item|menu)\s+contains\s+['\"]([^'\"]+)['\"]",
+        prompt,
+        re.IGNORECASE,
+    )
+    if m:
+        hints["item_contains"] = m.group(1).strip()
+    return hints
+
+
+def extract_reserve_hotel_hints(prompt: str) -> dict[str, str]:
+    """RESERVE_HOTEL: location, guests count from natural language."""
+    hints: dict[str, str] = {}
+    m = re.search(
+        r"location\s+equals\s+['\"]([^'\"]+)['\"]",
+        prompt,
+        re.IGNORECASE,
+    )
+    if m:
+        hints["location"] = m.group(1).strip()
+    m = re.search(r"guests\s+equals\s+['\"]?(\d+)", prompt, re.IGNORECASE)
+    if m:
+        hints["guests"] = m.group(1).strip()
+    return hints
 
 
 def extract_apply_job_title_and_location(prompt: str) -> tuple[str | None, str | None]:

@@ -34,7 +34,10 @@ from constraint_parser import (
     parse_constraints,
     format_constraints_block,
     extract_credentials,
+    expand_credential_placeholders,
     extract_apply_job_title_and_location,
+    extract_delivery_modal_hints,
+    extract_reserve_hotel_hints,
     extract_title_contains_substring,
     forbidden_not_equals_location_strings,
 )
@@ -440,6 +443,14 @@ async def handle_act(
             creds.setdefault("job_title", jt)
         if loc:
             creds.setdefault("location", loc)
+    if state.task_type == "ADD_TO_CART_MODAL_OPEN":
+        for k, v in extract_delivery_modal_hints(prompt).items():
+            creds.setdefault(k, v)
+    if state.task_type == "RESERVE_HOTEL":
+        for k, v in extract_reserve_hotel_hints(prompt).items():
+            creds.setdefault(k, v)
+
+    creds = expand_credential_placeholders(creds, url)
 
     creds_block = ""
     if creds:

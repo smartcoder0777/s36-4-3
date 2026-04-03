@@ -69,6 +69,7 @@ WEBSITE_HINTS: dict[str, str] = {
         "Books have title, author, genres, year, page_count, rating, price. "
         "Login/Register with placeholder credentials (' '/' '). "
         "Book detail: Add to Cart, Add to Wishlist, Open Preview buttons. "
+        "READING LIST: On book detail, use Add to Reading List / bookmark—after login if required. "
         "Admin: Add Book, Edit Book, Delete Book. Cart icon top-right."
     ),
     "autozone": (
@@ -114,6 +115,8 @@ WEBSITE_HINTS: dict[str, str] = {
     ),
     "autodelivery": (
         "SITE: Food delivery app. NAV: Restaurants list, Cart, Orders. "
+        "Food search: type restaurant name, then open restaurant → menu. "
+        "ADD-TO-CART MODAL: pick menu item meeting price/item constraints; click to open modal (not full checkout). "
         "Restaurant cards: name, cuisine, rating, description. Click to view restaurant detail. "
         "Restaurant detail: menu items with size, price, quantity selector. Add to cart. "
         "Cart page: shows items with preferences (dietary), size, quantity, price, restaurant name. "
@@ -229,7 +232,7 @@ TASK_PLAYBOOKS: dict[str, str] = {
     "REGISTRATION": "PLAYBOOK: 1) Navigate to register/signup page. 2) Type signup_username into username field. 3) Type signup_email into email field. 4) Type signup_password into password field. 5) Click submit/register button. Use EXACT credential values.",
     "LOGIN": "PLAYBOOK: 1) Navigate to login page. 2) Type username into username/email field EXACTLY as given. 3) Type password into password field EXACTLY as given. 4) Click login/sign-in submit button.",
     "LOGIN_THEN_LOGOUT": "PLAYBOOK: 1) Navigate to login page. 2) Type username exactly. 3) Type password exactly. 4) Click login submit. 5) After login, find logout/sign-out button (often in nav/profile menu). 6) Click logout.",
-    "LOGIN_THEN_LIST_ACTION": "PLAYBOOK: 1) Login (navigate to login, fill credentials, submit). 2) Search or browse to find the specific item matching the criteria. 3) Navigate to that item's detail page. 4) Click the add-to-watchlist/reading-list/cart button, or remove button.",
+    "LOGIN_THEN_LIST_ACTION": "PLAYBOOK: 1) **Login first**: open Login, type TASK_CREDENTIALS username/password exactly, submit. 2) **Books reading list**: browse or search for the book matching constraints (title/author/genre). 3) Open that book’s **detail** page. 4) Click **Add to reading list** / bookmark (not generic wishlist on another site).",
     "LOGIN_THEN_COMMENT": "PLAYBOOK: 1) Login (navigate to login, fill credentials, submit). 2) Find and navigate to the specific item. 3) Find the comment/review form on the detail page. 4) Type the comment text. 5) Submit.",
     "LOGIN_THEN_ADD_ITEM": "PLAYBOOK: 1) Login (navigate to login, fill credentials, submit). 2) Navigate to admin or add-item page (look for Admin/Add Film/Add Book in nav). 3) Fill ALL fields with EXACT values from task. 4) Submit.",
     "LOGIN_THEN_EDIT_ITEM": "PLAYBOOK: 1) Login. 2) Navigate to item list page (admin or main list). 3) Find the specific item matching the search/filter criteria. 4) Click Edit. 5) Update the specified fields EXACTLY. 6) Submit.",
@@ -248,7 +251,7 @@ TASK_PLAYBOOKS: dict[str, str] = {
     "ADD_COMMENT_BOOK": "PLAYBOOK: 1) On AutoBooks, find the book whose name CONTAINS the specified title. 2) Open that book's detail page. 3) Find the comments section. 4) Fill in commenter name and message. 5) Submit the comment.",
     "ADD_TO_CART": "PLAYBOOK: 1) Find and navigate to the specific book/item. 2) Click Add to Cart button.",
     "REMOVE_FROM_CART": "PLAYBOOK: 1) Navigate to the cart page. 2) Find the specific item in cart. 3) Click Remove/Delete.",
-    "VIEW_CART": "PLAYBOOK: 1) Navigate to the cart page (look for Cart icon in nav).",
+    "VIEW_CART": "PLAYBOOK: 1) Click the **Cart** / **shopping cart** icon in the top nav (or go to /cart). 2) Wait until the cart page loads.",
     "PURCHASE": "PLAYBOOK: 1) Add the item to cart. 2) Navigate to cart. 3) Click checkout/purchase button. 4) Fill out purchase form. 5) Submit.",
     "CONTACT": "PLAYBOOK: 1) Navigate to the Contact page. 2) Fill in name, email, message fields with EXACT values. 3) Submit the form.",
     "ADD_COMMENT": "PLAYBOOK: 1) Navigate to the specific item detail page. 2) Find the comment/review form. 3) Type the comment EXACTLY as specified. 4) Submit.",
@@ -258,7 +261,7 @@ TASK_PLAYBOOKS: dict[str, str] = {
     "CANCEL_RESERVATION": "PLAYBOOK: 1) Navigate to reservations/upcoming rides page. 2) Find the reservation matching ALL TASK_CONSTRAINTS. 3) Click Cancel. 4) Confirm if prompted.",
     "SELECT_DATE": "PLAYBOOK: 1) Find the date picker/calendar widget. 2) Click it to open. 3) Select a date satisfying TASK_CONSTRAINTS. 4) Confirm the selection.",
     "SELECT_TIME": "PLAYBOOK: 1) Find the time picker/dropdown. 2) Click to open. 3) Select a clock time that satisfies TASK_CONSTRAINTS (e.g. strictly after 17:00 for greater_than). 4) Confirm. Do not assume the default time is valid.",
-    "NEXT_PICKUP": "PLAYBOOK: 1) Look for a Next Pickup or scheduled ride section. 2) Find the pickup satisfying date/time constraints. 3) Click to view details.",
+    "NEXT_PICKUP": "PLAYBOOK: 1) Open **Trips**, **Upcoming**, or the **Next pickup** / scheduled ride card on the home or rides page. 2) Click that card or **View details** so the pickup detail opens. 3) If date/time pickers are shown, set **date** and **time** to EXACTLY match TASK_CONSTRAINTS (e.g. 2026-04-03 and 15:00:00). 4) Confirm/Save if a button is required so NEXT_PICKUP fires.",
     "STAR_AN_EMAIL": "PLAYBOOK: 1) Browse the inbox email list. 2) Find the email matching ALL constraints. 3) Click the Star icon on that email row.",
     "ARCHIVE_EMAIL": "PLAYBOOK: 1) Browse the inbox. 2) Find email matching constraints. 3) Click on that email. 4) Find Archive button. Click it.",
     "DELETE_EMAIL": "PLAYBOOK: 1) Find the email matching constraints. 2) Click the Delete/Trash icon on that email row.",
@@ -280,7 +283,7 @@ TASK_PLAYBOOKS: dict[str, str] = {
     "CREATE_CALENDAR": "PLAYBOOK: 1) Click the + button next to Other calendars. 2) Fill in name and description satisfying constraints. 3) Click Create/Save.",
     "EVENT_ADD_ATTENDEE": "PLAYBOOK: 1) Find an event on the calendar. 2) Click on it to open. 3) Click Edit. 4) Find Add Attendee field. 5) Type email satisfying constraints. 6) Save.",
     "DELETE_ADDED_EVENT": "PLAYBOOK: 1) Browse calendar events. 2) Find the event matching ALL constraints. 3) Click on it. 4) Click Delete. 5) Confirm.",
-    "CANCEL_ADD_EVENT": "PLAYBOOK: 1) Find the event matching constraints. 2) Click on it. 3) Click Cancel/Delete. 4) Confirm.",
+    "CANCEL_ADD_EVENT": "PLAYBOOK: 1) Switch to Month/Week if needed. 2) Find the ONE event matching ALL constraints (title, description, attendees, visibility, date). 3) Open it → **Cancel** / **Delete event** / discard. 4) Confirm. Skip unrelated events.",
     "NEW_CALENDAR_EVENT_ADDED": "PLAYBOOK: 1) Click the + or Add Event button. 2) Fill in the event form satisfying ALL constraints. 3) Save the event.",
     "ADD_EVENT": "PLAYBOOK: 1) Click + or on a time slot. 2) Fill ALL fields from TASK_CONSTRAINTS. 3) Save.",
     "VIEW_PENDING_EVENTS": "PLAYBOOK: 1) Switch to a view showing upcoming events. 2) Find events matching constraint. 3) Navigate to or click on that event.",
@@ -302,7 +305,7 @@ TASK_PLAYBOOKS: dict[str, str] = {
     "REQUEST_QUICK_APPOINTMENT": "PLAYBOOK: 1) Find Quick Appointment (or Book Appointment) — not carousel arrows. 2) Fill patient name, email, speciality/doctor fields so not_equals/not_contains constraints hold (e.g. pick speciality != excluded value). 3) Submit/confirm so the appointment event fires.",
     "VIEW_DOCTOR_EDUCATION": "PLAYBOOK: 1) Browse doctors list. 2) Find doctor matching ALL constraints. 3) Click on doctor's card. 4) Find Education tab/section. 5) Click it.",
     "COMMENT_ON_POST": "PLAYBOOK: 1) Find a post in the feed. 2) Click the Comment button. 3) Type the EXACT comment text. 4) Submit.",
-    "FOLLOW_PAGE": "PLAYBOOK: 1) Find the company page matching constraints. 2) Click the Follow button.",
+    "FOLLOW_PAGE": "PLAYBOOK: 1) Go to **Companies** or search. 2) Open the company page whose recommendation/snippet **contains** the required substring (TASK_CONSTRAINTS). 3) Click **Follow** on that page.",
     "UNFOLLOW_PAGE": "PLAYBOOK: 1) Find the company page. 2) Click Unfollow.",
     "CANCEL_APPLICATION": "PLAYBOOK: 1) Navigate to My Applications or Jobs. 2) Find the application matching constraints. 3) Click Withdraw/Cancel.",
     "SEARCH_USERS": "PLAYBOOK: 1) Find the user search bar. 2) Type the query. 3) Submit.",
@@ -316,11 +319,12 @@ TASK_PLAYBOOKS: dict[str, str] = {
     "CLOSE_POST_A_JOB_WINDOW": "PLAYBOOK: 1) Open the job posting form. 2) Fill in rate_from/rate_to. 3) Close the window (X/Cancel).",
     "NAVBAR_JOBS_CLICK": "PLAYBOOK: 1) Find Jobs link in the navbar. 2) Click it.",
     "NAVBAR_HIRES_CLICK": "PLAYBOOK: 1) Find Hires link in the navbar. 2) Click it.",
+    "NAVBAR_HIRE_LATER_CLICK": "PLAYBOOK: 1) Find **Hire later** (or Hire Later list) in the navbar or account menu. 2) Click it to open the saved experts page.",
     "SEARCH_SKILL": "PLAYBOOK: 1) Find the skill search bar. 2) Type the query. 3) Submit.",
     "EDIT_PROFILE_LOCATION": "PLAYBOOK: 1) Navigate to Profile/Settings. 2) Find Location field. 3) Enter value satisfying constraints. 4) Save.",
     "EDIT_PROFILE_EMAIL": "PLAYBOOK: 1) Navigate to Profile/Settings/Account. 2) Find Email field. 3) Enter value satisfying constraints. 4) Save.",
     "BOOKING_CONFIRM": "PLAYBOOK: 1) Browse listings. Find matching ALL TASK_CONSTRAINTS. 2) Set guests count. 3) Click Book Now/Reserve. 4) Fill payment form. 5) Submit/Confirm.",
-    "RESERVE_HOTEL": "PLAYBOOK: 1) Use search/filter to narrow listings. 2) Find ONE hotel matching ALL numeric/title constraints (hotel_id not_equals excludes that specific id; title not_contains excludes hotels containing that word). 3) Click on the hotel card (property-card-link) to open detail. 4) Click Book Now/Reserve (book-button). 5) Select payment method matching constraints. 6) Click Confirm/Submit to finalize—step 6 is required.",
+    "RESERVE_HOTEL": "PLAYBOOK: 1) In the main search bar, type **location** from TASK_CREDENTIALS (e.g. city/country). 2) Submit or pick a suggestion so listings load. 3) Find ONE property matching ALL constraints (location, guests, hotel_id/title not_equals/not_contains). 4) Open the **property card** (property-card-link). 5) Set **guests** to the required count if shown. 6) Click **Book Now** / **Reserve**. 7) On the booking form, choose **payment method** per constraints. 8) Click **Confirm/Submit** to finish—step 8 is required for the event.",
     "SEARCH_HOTEL": "PLAYBOOK: 1) Find the hotel search bar. 2) Type a query that helps satisfy constraints. 3) Submit. 4) Pick the matching hotel row/card, not favorite.",
     "PAYMENT_METHOD_SELECTED": "PLAYBOOK: 1) Search for hotels. 2) Select a hotel satisfying ALL constraints (hotel_id, title). 3) Click Book/Reserve on the hotel detail page. 4) On the booking form, select the payment method radio that satisfies constraints (e.g. 'cash_on_arrival'). 5) Click the Confirm/Book/Submit button to finalize—selecting the radio alone does NOT complete the booking.",
     "EDIT_NUMBER_OF_GUESTS": "PLAYBOOK: 1) Find hotel/listing matching constraints. 2) Find the guest count selector. 3) Set it to the required number.",
@@ -387,11 +391,12 @@ TASK_PLAYBOOKS: dict[str, str] = {
     "SELECT_TODAY": "PLAYBOOK: 1) Find the focus-today button. 2) Click it.",
     "AUTOLIST_SELECT_TASK_PRIORITY": "PLAYBOOK: 1) Find task with priority NOT the excluded value. 2) Click priority selector. 3) Select High or target value. 4) Save.",
     "AUTOLIST_CANCEL_TASK_CREATION": "PLAYBOOK: 1) Click Add Task. 2) Fill fields as specified. 3) Click Cancel/Discard instead of Submit.",
-    "AUTOLIST_TEAM_CREATED": "PLAYBOOK: 1) Navigate to Teams section. 2) Click Create Team. 3) Fill fields satisfying constraints. 4) Save.",
+    "AUTOLIST_TEAM_CREATED": "PLAYBOOK: 1) Open **Teams** (sidebar or tab). 2) Click **Create team** / **+ Team**. 3) Fill **name** and **description** so **not_contains** / **contains** rules on name, description, and **member** fields are all satisfied (pick values that avoid excluded substrings). 4) Add member if the form requires it. 5) **Save** / **Create** so the team-created event fires.",
     "AUTOLIST_COMPLETE_TASK": "PLAYBOOK: 1) Find task matching ALL constraints. 2) Click Complete/checkmark button. 3) Confirm.",
     "AUTOLIST_SELECT_DATE_FOR_TASK": "PLAYBOOK: 1) Find task. 2) Click Edit or date field. 3) Select date satisfying constraint. 4) Confirm.",
     "DELETE_BOOK": "PLAYBOOK: 1) Login with credentials. 2) Navigate to your books. 3) Find matching book. 4) Click Delete. 5) Confirm.",
     "EDIT_BOOK": "PLAYBOOK: 1) Login. 2) Find book matching constraints. 3) Click Edit. 4) Modify fields. 5) Save.",
+    "ADD_TO_READING_LIST": "PLAYBOOK: 1) If not logged in, login with TASK_CREDENTIALS. 2) **Search** or browse books for the title/author in constraints. 3) Open the **book detail** page. 4) Click **Add to reading list** / **Save** / bookmark for reading list.",
     "REMOVE_FROM_READING_LIST": "PLAYBOOK: 1) Login. 2) Navigate to Reading List. 3) Find book satisfying constraints. 4) Click Remove.",
     "CONTACT_BOOK": "PLAYBOOK: 1) Navigate to Contact page. 2) Fill form satisfying constraints. 3) Submit.",
     "REGISTRATION_BOOK": "PLAYBOOK: 1) Navigate to Register page. 2) Fill in username, email, password. 3) Submit.",
@@ -404,7 +409,7 @@ TASK_PLAYBOOKS: dict[str, str] = {
     "ADD_TO_WATCHLIST": "PLAYBOOK: 1) Login if required. 2) Browse films. 3) Find film matching constraints. 4) Click to open detail. 5) Click Add to Watchlist.",
     "REMOVE_FROM_WATCHLIST": "PLAYBOOK: 1) Login. 2) Navigate to watchlist. 3) Find item. 4) Click Remove.",
     "SHARE_MOVIE": "PLAYBOOK: 1) Browse films. 2) Find film matching constraints. 3) Click to open detail. 4) Click Share.",
-    "CHECKOUT_STARTED": "PLAYBOOK: 1) Browse products. 2) Find product matching constraints. 3) Click Buy Now.",
+    "CHECKOUT_STARTED": "PLAYBOOK: 1) Find a product whose **line total** or checkout amount matches the **total** in constraints. 2) Click **Buy now** on that product/card. 3) Do not stop on the catalog—open checkout.",
     "ABOUT_PAGE_VIEW": "PLAYBOOK: 1) Find About link. 2) Click it.",
     "DATE_DROPDOWN_OPENED": "PLAYBOOK: 1) Find date selector. 2) Click to open. 3) Select date satisfying constraint. 4) Confirm.",
     "TIME_DROPDOWN_OPENED": "PLAYBOOK: 1) Find time selection dropdown. 2) Click to open. 3) Select time matching constraint. 4) Confirm.",
@@ -422,7 +427,7 @@ TASK_PLAYBOOKS: dict[str, str] = {
     "DELETE_REVIEW": "PLAYBOOK: 1) Find restaurant matching constraints. 2) Open it. 3) Find review matching constraints. 4) Click Delete. 5) Confirm.",
     "RESTAURANT_FILTER": "PLAYBOOK: 1) Find cuisine filter. 2) Apply filter satisfying constraints.",
     "ADD_TO_CART_MENU_ITEM": "PLAYBOOK: 1) Browse restaurants. 2) Find restaurant. 3) Find menu item matching constraints. 4) Add to cart.",
-    "ADD_TO_CART_MODAL_OPEN": "PLAYBOOK: 1) Find restaurant matching constraints. 2) Click to view menu. 3) Find menu item matching price constraint. 4) Click to open add-to-cart modal.",
+    "ADD_TO_CART_MODAL_OPEN": "PLAYBOOK: 1) Search **restaurant** name from TASK_CREDENTIALS in the food search bar. 2) Open that **restaurant** (card/link). 3) On the menu, find an item whose **price** satisfies greater_than / less_than and **item contains** text if given. 4) Click that item or **+** / **Add** to open the **add-to-cart modal** (do not checkout—modal open is the goal).",
     "QUICK_ORDER_STARTED": "PLAYBOOK: 1) Find Quick Order button on any restaurant card. 2) Click it.",
     "FAQ_OPENED": "PLAYBOOK: 1) Navigate to FAQ page. 2) Find FAQ item matching constraint. 3) Click to expand.",
     "MESSAGE_HOST": "PLAYBOOK: 1) Find hotel matching ALL constraints. 2) Click to open. 3) Find Message Host button. 4) Type message. 5) Send.",
@@ -468,6 +473,14 @@ TASK_PLAYBOOKS: dict[str, str] = {
     "EDIT_TASK": "PLAYBOOK: 1) Find task matching constraints. 2) Click Edit. 3) Update fields. 4) Save.",
     "COMPLETE_TASK": "PLAYBOOK: 1) Find task matching constraints. 2) Click Complete/Done/Checkmark.",
     "JOB_POSTING": "PLAYBOOK: 1) Find Post a Job button. 2) Click it. 3) Type EXACT job title. 4) Submit.",
+    "HIDE_POST": "PLAYBOOK: 1) On the feed, find the post whose text **contains** the long snippet in CONSTRAINTS (scroll if needed). 2) Open the post **⋯** / **More** menu. 3) Click **Hide** / **Hide post** / **Not interested** as offered.",
+    "TEMPLATE_CANCELED": "PLAYBOOK: 1) Go to **Templates** (or Mail settings). 2) Find the template matching **body contains**, **subject equals**, **to** constraints. 3) Open menu → **Cancel** / **Delete** / **Discard** so TEMPLATE_CANCELED fires.",
+    "CONTACT_PAGE_VIEW": "PLAYBOOK: 1) Click **Contact** in the nav/footer (or /contact). 2) Stop when the Contact page is visible.",
+    "FILTER_FILM": "PLAYBOOK: 1) Open **Films** / browse. 2) Use **genre** and/or **year** filters so values satisfy CONSTRAINTS (e.g. year ≤ value, genre equals). 3) Click **Apply** / **Filter**. 4) Open the matching film card if required.",
+    "SEARCH_PRESCRIPTION": "PLAYBOOK: 1) Go to **Prescriptions** / Medical records. 2) Use search or filters for **medicine_name**, **doctor_name**, etc. 3) Narrow until one row matches ALL **not_equals** / **contains** rules. 4) Open details if required.",
+    "VOICE_MUTE_TOGGLE": "PLAYBOOK: 1) Join or select the **voice channel** matching **channel_name** and **server_name**. 2) Click the **mute** / microphone control to toggle mute.",
+    "ADD_REACTION": "PLAYBOOK: 1) Open the **channel** (not_equals constraints). 2) Find the **message** not matching excluded **message_id**. 3) Hover message → **Add reaction** → pick emoji.",
+    "EDIT_USER_BOOK": "PLAYBOOK: 1) **Login** with TASK_CREDENTIALS. 2) Go to profile / **My books**. 3) Find the book field to edit per task. 4) Save.",
     "GENERAL": "PLAYBOOK: Success requires triggering the correct backend event (submit/book/order). Find forms or primary CTAs (Book, Reserve, Submit, Search) matching the TASK. Avoid hero carousels (next/prev slide) unless the task asks to browse slides. Avoid cycling the same marketing/nav href. Use TASK_CONSTRAINTS for field values.",
 }
 

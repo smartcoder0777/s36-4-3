@@ -116,6 +116,8 @@ def try_quick_click(prompt: str, url: str, seed: str | None, step: int) -> list[
 
     # Navbar hires (autowork 8009)
     if port == 8009:
+        if re.search(r"hire\s+later.*navbar|navbar.*hire\s+later", t):
+            return _click("href", f"/hire-later?seed={seed}") if seed else None
         if re.search(r"hires.*navbar|navbar.*hires", t):
             return _click("href", f"/hires?seed={seed}") if seed else None
         if "book a consultation" in t or "consultation" in t:
@@ -124,6 +126,12 @@ def try_quick_click(prompt: str, url: str, seed: str | None, step: int) -> list[
     # About page (autodining 8003)
     if port == 8003 and re.search(r"about\s+page|navigate.*about.*information", t):
         return _click("id", "about-menu-item")
+
+    # Contact page (autodining 8003) — CONTACT_PAGE_VIEW
+    if port == 8003 and re.search(r"open\s+the\s+contact\s+page", t):
+        if seed:
+            return _click("href", f"/contact?seed={seed}")
+        return _click("href", "/contact")
 
     # View cart (autozone 8002)
     if port == 8002:
@@ -204,6 +212,32 @@ def try_quick_click(prompt: str, url: str, seed: str | None, step: int) -> list[
         elif step == 2:
             return _click_xpath("//button[contains(@id, 'add-label-btn') or contains(@id, 'add-label-button')]")
         # step >= 3: fall through to LLM
+        return None
+
+    # ADD_TO_CART_MODAL_OPEN (autodelivery 8006): type restaurant name into food search first
+    if port == 8006 and re.search(r"add-to-cart modal|add\s+to\s+cart\s+modal", t):
+        m_rest = re.search(r"restaurant\s+equals\s+['\"]([^'\"]+)['\"]", prompt, re.IGNORECASE)
+        if m_rest and step == 0:
+            return [
+                {
+                    "type": "TypeAction",
+                    "text": m_rest.group(1).strip(),
+                    "selector": _sel_attr("id", "find-food"),
+                }
+            ]
+        return None
+
+    # Reserve hotel (autolodge 8007): type destination into main search first
+    if port == 8007 and re.search(r"reserve\s+the\s+hotel", t):
+        m_loc = re.search(r"location\s+equals\s+['\"]([^'\"]+)['\"]", prompt, re.IGNORECASE)
+        if m_loc and step == 0:
+            return [
+                {
+                    "type": "TypeAction",
+                    "text": m_loc.group(1).strip(),
+                    "selector": _sel_attr("id", "submit-query"),
+                }
+            ]
         return None
 
     # Search delivery restaurant (autodelivery 8006)
