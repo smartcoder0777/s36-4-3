@@ -61,7 +61,6 @@ EVENT_TASK_ALIASES: dict[str, str] = {
     "UNHIDE_POST": "VIEW_HIDDEN_POSTS",
     "REMOVE_FROM_CART_BOOK": "REMOVE_FROM_CART",
     "BROWSE_FAVORITE_EXPERT": "NAVBAR_EXPERTS_CLICK",
-    "VIEW_SUBNET": "FAVORITE_SUBNET",
 }
 
 # ---------------------------------------------------------------------------

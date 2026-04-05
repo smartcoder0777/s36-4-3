@@ -476,6 +476,36 @@ def try_quick_click(prompt: str, url: str, seed: str | None, step: int) -> list[
             return _click_xpath("//*[contains(@id,'delete-book') or contains(.,'Delete') or contains(.,'Remove')]")
         return None
 
+    # Edit draft email (automail 8005)
+    if port == 8005 and re.search(r"edit\s+draft", t):
+        if step == 0:
+            return _click_xpath("//*[contains(@id,'sidebar-drafts') or contains(.,'Drafts')]")
+        if step == 1:
+            return _click_xpath("//*[contains(@id,'draft') or contains(.,'Draft')][1]")
+        return None
+
+    # Cancel application / browse favorite expert (autoconnect/autowork)
+    if port == 8008 and re.search(r"cancel\s+application|withdraw\s+application", t):
+        if step == 0:
+            return _click_xpath("//*[contains(@href,'application') or contains(@id,'application') or contains(.,'Applications')]")
+        if step == 1:
+            return _click_xpath("//*[contains(.,'Withdraw') or contains(.,'Cancel') or contains(@id,'withdraw')]")
+        return None
+    if port == 8009 and re.search(r"browse\s+favorite\s+expert|favorite\s+expert|experts?\s+option\s+in\s+the\s+navbar", t):
+        return _click_xpath("//*[contains(@href,'experts') or contains(@id,'experts') or contains(.,'Experts')]")
+
+    # Select task priority (autolist 8011)
+    if port == 8011 and re.search(r"select\s+task\s+priority|change\s+the\s+priority", t):
+        if step == 0:
+            return _click_xpath("//*[contains(@id,'priority') or contains(@aria-label,'priority') or contains(.,'Priority')]")
+        if step == 1:
+            return _click_xpath("//*[contains(.,'High') or contains(.,'Medium') or contains(.,'Low') or contains(@id,'priority-option')]")
+        return None
+
+    # Select car option (autodrive 8012)
+    if port == 8012 and re.search(r"select\s+car", t):
+        return _click_xpath("//*[contains(@id,'car-option') or contains(@class,'car-option') or contains(.,'Sedan') or contains(.,'SUV')]")
+
     # Confirm and pay (autolodge 8007)
     if port == 8007 and re.search(r"confirm\s+and\s+pay|confirm\s+the\s+booking", t):
         m_title = re.search(r"title\s+equals\s+['\"]([^'\"]+)['\"]", prompt, re.IGNORECASE)
@@ -489,6 +519,354 @@ def try_quick_click(prompt: str, url: str, seed: str | None, step: int) -> list[
         if step == 3:
             return _click_xpath("//*[contains(@id,'confirm') or contains(@id,'pay') or contains(.,'Confirm') or contains(.,'Pay')]")
         return None
+
+    # --- R15 additions (Autoppia_17 bank): broader first-hop coverage ---
+    # Gated with _step0_only() so one-shot navigations do not repeat every step.
+
+    # autocinema (8000/8100)
+    if port in (8000, 8100):
+        if re.search(r"go.*search\s+page|navigate.*search", t):
+            if not _step0_only():
+                return None
+            return _click("id", "go-to-search-button")
+        if re.search(r"view.*stats|statistics", t):
+            if not _step0_only():
+                return None
+            return _click("id", "stats-movies-card")
+
+    # autobooks (8001/8101) — cart respects login-first like the block above
+    if port in (8001, 8101):
+        if re.search(r"go.*search\s+page|navigate.*search", t):
+            if not _step0_only():
+                return None
+            return _click("id", "go-to-search-button")
+        if re.search(r"view.*cart|shopping\s+cart|my\s+cart", t):
+            if not _step0_only():
+                return None
+            if re.search(r"\b(authenticate|login|sign\s*in)\b", t, re.IGNORECASE):
+                return None
+            return _click("href", f"/cart?seed={seed}") if seed else _click("id", "cart-page")
+        if re.search(r"reading\s+list", t):
+            if not _step0_only():
+                return None
+            return _click("id", "reading-list-button")
+        if re.search(r"add.*book.*cart|add.*to.*cart", t) and "featured" not in t:
+            if not _step0_only():
+                return None
+            return _click("id", "add-to-cart-button")
+
+    # autozone (8002/8102)
+    if port in (8002, 8102):
+        if re.search(r"go.*search\s+page|navigate.*search", t):
+            if not _step0_only():
+                return None
+            return _click("id", "go-to-search-button")
+        if re.search(r"checkout|proceed.*checkout", t):
+            if not _step0_only():
+                return None
+            return _click("id", "checkout-button")
+        if re.search(r"grid\s+view", t):
+            if not _step0_only():
+                return None
+            return _click("id", "grid-view-button")
+        if re.search(r"list\s+view", t):
+            if not _step0_only():
+                return None
+            return _click("id", "list-view-button")
+
+    # autodining (8003/8103)
+    if port in (8003, 8103):
+        if re.search(r"help\s+page|faq|frequently\s+asked", t):
+            if not _step0_only():
+                return None
+            return _click("id", "help-link")
+        if re.search(r"contact\s+support|support\s+page", t):
+            if not _step0_only():
+                return None
+            return _click("id", "contact-support-button")
+        if re.search(r"delivery\s+toggle|switch.*delivery", t):
+            if not _step0_only():
+                return None
+            return _click("id", "delivery-toggle")
+
+    # autocrm (8004/8104)
+    if port in (8004, 8104):
+        if re.search(r"add.*client|new\s+client|create.*client", t):
+            if not _step0_only():
+                return None
+            return _click("id", "add-client-button")
+        if re.search(r"add.*matter|new\s+matter|create.*matter", t):
+            if not _step0_only():
+                return None
+            return _click("id", "add-matter-button")
+        if re.search(r"clients?\s+(?:page|section|nav|tab)", t):
+            if not _step0_only():
+                return None
+            return _click("id", "clients-nav-link")
+        if re.search(r"matters?\s+(?:page|section|nav|tab)", t):
+            if not _step0_only():
+                return None
+            return _click("id", "matters-nav-link")
+        if re.search(r"calendar\s+(?:page|section|nav|tab)", t):
+            if not _step0_only():
+                return None
+            return _click("id", "calendar-nav-link")
+        if re.search(r"documents?\s+(?:page|section|nav|tab)", t):
+            if not _step0_only():
+                return None
+            return _click("id", "documents-nav-link")
+        if re.search(r"billing\s+(?:page|section|nav|tab)", t):
+            if not _step0_only():
+                return None
+            return _click("id", "billing-nav-link")
+        if re.search(r"settings?\s+(?:page|section|nav|tab)", t):
+            if not _step0_only():
+                return None
+            return _click("id", "settings-nav-link")
+        if re.search(r"dashboard|home\s+page", t):
+            if not _step0_only():
+                return None
+            return _click("id", "dashboard-nav-link")
+        if re.search(r"help\s+(?:center|page|section)", t):
+            if not _step0_only():
+                return None
+            return _click("id", "help-link")
+
+    # automail (8005/8105)
+    if port in (8005, 8105):
+        if re.search(r"inbox|go.*inbox", t):
+            if not _step0_only():
+                return None
+            return _click("id", "sidebar-inbox")
+        if re.search(r"starred|go.*starred", t):
+            if not _step0_only():
+                return None
+            return _click("id", "sidebar-starred")
+        if re.search(r"drafts|go.*drafts", t):
+            if not _step0_only():
+                return None
+            return _click("id", "sidebar-drafts")
+        if re.search(r"sent\s+(?:mail|folder|page)|go.*sent", t):
+            if not _step0_only():
+                return None
+            return _click("id", "sidebar-sent")
+        if re.search(r"trash|go.*trash", t):
+            if not _step0_only():
+                return None
+            return _click("id", "sidebar-trash")
+        if re.search(r"compose|write.*(?:email|mail)|new\s+(?:email|mail)", t):
+            if not _step0_only():
+                return None
+            return _click("id", "compose-modal")
+        if re.search(r"star\s+(?:the|this)\s+email|mark.*star", t):
+            if not _step0_only():
+                return None
+            return _click("id", "star-button")
+        if re.search(r"archive\s+(?:the|this)\s+email", t):
+            if not _step0_only():
+                return None
+            return _click("id", "archive-button")
+        if re.search(r"mark.*spam", t):
+            if not _step0_only():
+                return None
+            return _click("id", "spam-button")
+        if re.search(r"mark.*unread", t):
+            if not _step0_only():
+                return None
+            return _click("id", "unread-button")
+
+    # autodelivery (8006/8106)
+    if port in (8006, 8106):
+        if re.search(r"pickup\s+mode|switch.*pickup", t):
+            if not _step0_only():
+                return None
+            return _click("id", "pickup-mode-button")
+        if re.search(r"delivery\s+mode|switch.*delivery", t):
+            if not _step0_only():
+                return None
+            return _click("id", "delivery-mode-button")
+        if re.search(r"view.*cart|my\s+cart|shopping\s+cart", t):
+            if not _step0_only():
+                return None
+            return _click("id", "cart-button")
+        if re.search(r"place\s+order|submit\s+order", t):
+            if not _step0_only():
+                return None
+            return _click("id", "place-order-button")
+        if re.search(r"checkout", t):
+            if not _step0_only():
+                return None
+            return _click("id", "checkout-button")
+
+    # autolodge (8007/8107) — generic nav hops only (confirm/pay handled above)
+    if port in (8007, 8107):
+        if re.search(r"wishlist|saved\s+(?:stays|properties)", t):
+            if not _step0_only():
+                return None
+            return _click("id", "nav-wishlist")
+        if re.search(r"popular|popular\s+stays", t):
+            if not _step0_only():
+                return None
+            return _click("id", "nav-popular")
+        if re.search(r"help\s+(?:page|center)", t):
+            if not _step0_only():
+                return None
+            return _click("id", "nav-help")
+        if re.search(r"reserve|book\s+(?:this|the)\s+(?:stay|room|property)", t):
+            if not _step0_only():
+                return None
+            return _click("id", "reserve-button")
+        if re.search(r"check\s+availability", t):
+            if not _step0_only():
+                return None
+            return _click("id", "check-availability-button")
+        if re.search(r"share\s+(?:this|the)\s+(?:stay|property|listing)", t):
+            if not _step0_only():
+                return None
+            return _click("id", "share-button")
+
+    # autoconnect (8008/8108)
+    if port in (8008, 8108):
+        if re.search(r"post\s+(?:a\s+)?(?:status|update|article)", t):
+            if not _step0_only():
+                return None
+            return _click("id", "post-article")
+        if re.search(r"start\s+hir|hire\s+(?:a|someone)", t):
+            if not _step0_only():
+                return None
+            return _click("id", "start-hire-button")
+        if re.search(r"create.*posting|job\s+posting", t):
+            if not _step0_only():
+                return None
+            return _click("id", "create-posting-button")
+        if re.search(r"consult.*expert", t):
+            if not _step0_only():
+                return None
+            return _click("id", "consult-expert-button")
+        if re.search(r"add.*favorites?|save.*favorites?", t):
+            if not _step0_only():
+                return None
+            return _click("id", "add-to-favorites-button")
+
+    # autowork (8009/8109)
+    if port in (8009, 8109):
+        if re.search(r"skills?\s+(?:tab|page|section)|navigate.*skills", t):
+            if not _step0_only():
+                return None
+            return _click("href", f"/skills?seed={seed}") if seed else None
+        if re.search(r"jobs?\s+(?:tab|page|section)|navigate.*jobs", t):
+            if not _step0_only():
+                return None
+            return _click("href", f"/jobs?seed={seed}") if seed else None
+        if re.search(r"search.*jobs?", t):
+            if not _step0_only():
+                return None
+            return _click("id", "jobs-search-button")
+
+    # autocalendar (8010/8110)
+    if port in (8010, 8110):
+        if re.search(r"previous\s+(?:month|week|day)|go\s+back", t):
+            if not _step0_only():
+                return None
+            return _click("id", "nav-prev-btn")
+        if re.search(r"next\s+(?:month|week|day)|go\s+forward", t):
+            if not _step0_only():
+                return None
+            return _click("id", "nav-next-btn")
+        if re.search(r"create.*event|new\s+event|add\s+event", t):
+            if not _step0_only():
+                return None
+            return _click("id", "create-event-button")
+        if re.search(r"add.*calendar|new\s+calendar|create.*calendar", t) and not re.search(
+            r"calendar\s+event|new\s+calendar\s+event", t
+        ):
+            if not _step0_only():
+                return None
+            return _click("id", "add-calendar-modal")
+
+    # autolist (8011/8111)
+    if port in (8011, 8111):
+        if re.search(r"today|today.?s?\s+tasks", t):
+            if not _step0_only():
+                return None
+            return _click("id", "today-nav-item")
+        if re.search(r"backlog|backlog\s+tasks", t):
+            if not _step0_only():
+                return None
+            return _click("id", "backlog-nav-item")
+        if re.search(r"create.*(?:task|event)|new\s+(?:task|event)|add\s+(?:task|event)", t):
+            if not _step0_only():
+                return None
+            return _click("id", "create-event-button")
+        if re.search(r"add.*project|new\s+project|create.*project", t):
+            if not _step0_only():
+                return None
+            return _click("id", "add-project-button")
+        if re.search(r"add.*team|new\s+team|create.*team", t):
+            if not _step0_only():
+                return None
+            return _click("id", "add-team-button")
+
+    # autodrive (8012/8112)
+    if port in (8012, 8112):
+        if re.search(r"view.*trips?|my\s+trips?|trip\s+history", t):
+            if not _step0_only():
+                return None
+            return _click("id", "nav-trips")
+        if re.search(r"book\s+(?:a\s+)?ride|request\s+(?:a\s+)?ride", t):
+            if not _step0_only():
+                return None
+            return _click("id", "book-button")
+        if re.search(r"pickup\s+now|ride\s+now", t):
+            if not _step0_only():
+                return None
+            return _click("id", "pickup-now")
+
+    # autohealth (8013/8113)
+    if port in (8013, 8113):
+        if re.search(r"book\s+(?:an?\s+)?appointment", t):
+            if not _step0_only():
+                return None
+            return _click("id", "book-appointment-button")
+        if re.search(r"upload.*record|add.*record", t):
+            if not _step0_only():
+                return None
+            return _click("id", "upload-record-button")
+        if re.search(r"view.*record", t):
+            if not _step0_only():
+                return None
+            return _click("id", "view-record-button")
+        if re.search(r"view.*prescription", t):
+            if not _step0_only():
+                return None
+            return _click("id", "view-prescription-button")
+        if re.search(r"view.*reviews?|see.*reviews?", t):
+            if not _step0_only():
+                return None
+            return _click("id", "view-reviews-button")
+        if re.search(r"contact.*doctor|message.*doctor", t):
+            if not _step0_only():
+                return None
+            return _click("id", "contact-doctor-button")
+
+    # autostats (8014/8114)
+    if port in (8014, 8114):
+        if re.search(r"connect\s+wallet", t):
+            if not _step0_only():
+                return None
+            return _click("id", "connect-wallet-btn")
+        if re.search(r"buy\s+order|place.*buy", t):
+            if not _step0_only():
+                return None
+            return _click("id", "order-buy-submit-btn")
+        if re.search(r"sell\s+order|place.*sell", t):
+            if not _step0_only():
+                return None
+            return _click("id", "order-sell-submit-btn")
+        if re.search(r"send\s+transfer", t):
+            if not _step0_only():
+                return None
+            return _click("id", "send-transfer-toggle-btn")
 
     return None
 

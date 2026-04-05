@@ -268,6 +268,109 @@ def _extract_use_case_hint(prompt: str, relevant_data: dict | None) -> str | Non
     return None
 
 
+def _to_number(v) -> float | None:
+    try:
+        if isinstance(v, (int, float)):
+            return float(v)
+        s = str(v).strip()
+        if not s:
+            return None
+        return float(s)
+    except Exception:
+        return None
+
+
+def _candidate_blob(c) -> str:
+    parts = [
+        str(getattr(c, "text", "") or ""),
+        str(getattr(c, "context", "") or ""),
+        str(getattr(c, "name", "") or ""),
+        str(getattr(c, "placeholder", "") or ""),
+        str(getattr(c, "href", "") or ""),
+        str(getattr(getattr(c, "selector", None), "value", "") or ""),
+    ]
+    return " ".join(parts).lower()
+
+
+def _score_candidate_for_constraints(c, constraints: list, prompt: str, task_type: str) -> float:
+    blob = _candidate_blob(c)
+    score = 0.0
+    for ct in constraints or []:
+        op = (getattr(ct, "operator", "") or "").lower()
+        val = getattr(ct, "value", None)
+        sval = str(val).strip().lower() if val is not None else ""
+        if not sval:
+            continue
+        if op in ("equals", "contains"):
+            if sval in blob:
+                score += 2.0
+        elif op in ("not_equals", "not_contains"):
+            if sval in blob:
+                score -= 1.5
+            else:
+                score += 0.2
+        elif op in ("greater_than", "greater_than_or_equal", "less_than", "less_than_or_equal"):
+            # Numeric constraints: weak bonus if candidate appears to expose numeric content.
+            if _to_number(val) is not None and re.search(r"\b\d+(?:\.\d+)?\b", blob):
+                score += 0.4
+
+    t = (task_type or "").upper()
+    p = (prompt or "").lower()
+    if any(k in t for k in ("SEARCH", "FILTER")) or "search" in p:
+        if getattr(c, "tag", "") == "input" or "search" in blob:
+            score += 1.0
+    if any(k in t for k in ("DELETE", "REMOVE", "CANCEL", "WITHDRAW")):
+        if re.search(r"\b(delete|remove|cancel|withdraw)\b", blob):
+            score += 1.5
+    if any(k in t for k in ("CONFIRM", "PAY", "CHECKOUT", "BOOK")):
+        if re.search(r"\b(confirm|pay|submit|book|reserve)\b", blob):
+            score += 1.5
+    if any(k in t for k in ("EDIT", "UPDATE")):
+        if re.search(r"\b(edit|update|revise|amend)\b", blob):
+            score += 1.3
+    return score
+
+
+def _pick_constraint_guided_click_index(
+    candidates: list,
+    constraints: list,
+    prompt: str,
+    task_type: str,
+    avoid_selector_value: str = "",
+) -> int | None:
+    if not candidates:
+        return None
+    avoid_key = _normalize_selector_value_for_compare(avoid_selector_value)
+    best_idx = None
+    best_score = float("-inf")
+    for i, c in enumerate(candidates):
+        if avoid_key:
+            cval = _normalize_selector_value_for_compare(_candidate_selector_value(c))
+            if cval and cval == avoid_key:
+                continue
+        s = _score_candidate_for_constraints(c, constraints, prompt, task_type)
+        if s > best_score:
+            best_score = s
+            best_idx = i
+    if best_idx is None:
+        return None
+    # Avoid forcing weak guesses; fallback to generic behavior for near-random scores.
+    return best_idx if best_score >= 0.2 else None
+
+
+def _state_delta_indicates_stall(delta: str) -> bool:
+    d = (delta or "").lower()
+    if not d:
+        return False
+    if "url_changed=false" not in d:
+        return False
+    if "summary_changed=false" not in d:
+        return False
+    m = re.search(r"candidate_added=(\d+)", d)
+    added = int(m.group(1)) if m else 99
+    return added <= 1
+
+
 def _get_llm_client() -> LLMClient:
     global _llm_client
     if _llm_client is None:
@@ -368,7 +471,7 @@ async def handle_act(
     # STAGE 0: Knowledge base lookup (skip LLM for known tasks)
     # ===================================================================
     known_actions = _TASK_KNOWLEDGE.get(task)
-    if _env_flag("AGENT_USE_TASK_KNOWLEDGE", False) and known_actions and step < len(known_actions):
+    if _env_flag("AGENT_USE_TASK_KNOWLEDGE", True) and known_actions and step < len(known_actions):
         return [known_actions[step]]
     # When disabled or replay exhausted, continue with the pipeline (never return []).
 
@@ -382,14 +485,22 @@ async def handle_act(
     # ===================================================================
     # STAGE 1: Quick click shortcuts (no HTML parsing needed)
     # ===================================================================
-    quick = try_quick_click(prompt, url, seed, step)
-    if quick is not None:
-        if not _shortcut_actions_safe_for_page(quick, snapshot_html):
-            logger.info("Skipping shortcut due to selector not present on page")
-        else:
-            logger.info(f"Quick click: {len(quick)} actions")
-            _record_actions(task, quick, url, step)
-            return quick
+    skip_quick_due_to_repeat = (
+        _env_flag("AGENT_SKIP_QUICK_WHEN_REPEATING", True)
+        and step >= 2
+        and StateTracker.get_repeat_count(task) >= 1
+    )
+    if not skip_quick_due_to_repeat:
+        quick = try_quick_click(prompt, url, seed, step)
+        if quick is not None:
+            if not _shortcut_actions_safe_for_page(quick, snapshot_html):
+                logger.info("Skipping shortcut due to selector not present on page")
+            else:
+                logger.info(f"Quick click: {len(quick)} actions")
+                _record_actions(task, quick, url, step)
+                return quick
+    else:
+        logger.info("Skipping quick shortcut due to repeat pattern")
 
     # ===================================================================
     # STAGE 2: Search shortcut
@@ -458,6 +569,14 @@ async def handle_act(
         recent = state.history[-2:] if len(state.history) >= 2 else []
         all_scrolls = all(a.action_type == "ScrollAction" for a in recent) if recent else False
         if not all_scrolls:
+            idx = _pick_constraint_guided_click_index(
+                candidates, state.constraints, prompt, state.task_type, StateTracker.get_last_click_selector_value(task)
+            )
+            if idx is not None:
+                logger.info("Stuck recovery: constraint-guided click candidate=%s", idx)
+                guided = build_iwa_action({"action": "click", "candidate_id": idx}, candidates, url, seed)
+                _record_actions(task, [guided], url, step)
+                return [guided]
             logger.info("Stuck recovery: auto-scroll")
             StateTracker.record_action(task, "ScrollAction", "", url, step)
             return [{"type": "ScrollAction", "down": True}]
@@ -478,6 +597,7 @@ async def handle_act(
     if soup:
         page_summary = (soup.get_text(separator=" ", strip=True) or "")[:400]
     state_delta = StateTracker.compute_state_delta(task, url, page_summary, candidates)
+    strategy = "tool_first" if (_state_delta_indicates_stall(state_delta) and step >= 2) else "default"
 
     # Cards preview for early steps
     cards_preview = ""
@@ -503,6 +623,12 @@ async def handle_act(
             "to see form fields before guessing clicks."
         )
         extra_hint = f"{extra_hint} | {tool_nudge}" if extra_hint else tool_nudge
+    if strategy == "tool_first":
+        strategy_hint = (
+            "No progress detected. Change strategy now: call a tool (extract_forms/list_cards/search_text), "
+            "then choose a different target instead of repeating the last click."
+        )
+        extra_hint = f"{extra_hint} | {strategy_hint}" if extra_hint else strategy_hint
 
     site_c_hint = _extra_hints_for_site_and_constraints(state.constraints, website)
     if site_c_hint:
@@ -597,6 +723,8 @@ async def handle_act(
         ]
 
         max_tool_calls = int(os.getenv("AGENT_MAX_TOOL_CALLS", "2"))
+        if strategy == "tool_first":
+            max_tool_calls = max(max_tool_calls, 3)
         tool_calls_made = 0
         decision = None
 
@@ -640,7 +768,15 @@ async def handle_act(
         if decision is None:
             # Total failure: fallback
             if step < 5 and candidates:
-                fallback = build_iwa_action({"action": "click", "candidate_id": 0}, candidates, url, seed)
+                idx = _pick_constraint_guided_click_index(
+                    candidates, state.constraints, prompt, state.task_type, StateTracker.get_last_click_selector_value(task)
+                )
+                fallback = build_iwa_action(
+                    {"action": "click", "candidate_id": idx if idx is not None else 0},
+                    candidates,
+                    url,
+                    seed,
+                )
             else:
                 fallback = {"type": "ScrollAction", "down": True}
             _record_actions(task, [fallback], url, step)
@@ -659,7 +795,15 @@ async def handle_act(
     except Exception as e:
         logger.error(f"LLM call failed: {e}")
         if step < 5 and candidates:
-            fallback = build_iwa_action({"action": "click", "candidate_id": 0}, candidates, url, seed)
+            idx = _pick_constraint_guided_click_index(
+                candidates, state.constraints, prompt, state.task_type, StateTracker.get_last_click_selector_value(task)
+            )
+            fallback = build_iwa_action(
+                {"action": "click", "candidate_id": idx if idx is not None else 0},
+                candidates,
+                url,
+                seed,
+            )
         else:
             fallback = {"type": "ScrollAction", "down": True}
         _record_actions(task, [fallback], url, step)
@@ -669,7 +813,11 @@ async def handle_act(
     # STAGE 7: Build action from LLM decision
     # ===================================================================
     if _env_flag("AGENT_ENABLE_LOOP_BREAKER", True) and StateTracker.get_repeat_count(task) >= 2 and candidates:
-        idx = _pick_non_repeating_click_index(candidates, StateTracker.get_last_sig(task))
+        idx = _pick_constraint_guided_click_index(
+            candidates, state.constraints, prompt, state.task_type, StateTracker.get_last_click_selector_value(task)
+        )
+        if idx is None:
+            idx = _pick_non_repeating_click_index(candidates, StateTracker.get_last_sig(task))
         if idx is not None:
             decision = {"action": "click", "candidate_id": idx}
 
@@ -691,16 +839,31 @@ async def handle_act(
                     logger.info("Overriding repeat click on selector value=%s -> candidate_id=%s", upcoming_sv, alt)
                     decision = {"action": "click", "candidate_id": alt}
                 else:
-                    logger.info("Repeat click on %s; no alternate candidate — scroll", upcoming_sv)
-                    decision = {"action": "scroll", "direction": "down"}
+                    guided = _pick_constraint_guided_click_index(
+                        candidates, state.constraints, prompt, state.task_type, upcoming_sv
+                    )
+                    if guided is not None:
+                        logger.info("Repeat click on %s; switching to constraint-guided candidate=%s", upcoming_sv, guided)
+                        decision = {"action": "click", "candidate_id": guided}
+                    else:
+                        logger.info("Repeat click on %s; no alternate candidate — scroll", upcoming_sv)
+                        decision = {"action": "scroll", "direction": "down"}
 
     act_name = (decision.get("action") or "").lower()
     if act_name == "done":
         if step <= 3 and _history_no_progress(history) and candidates:
-            idx = _pick_non_repeating_click_index(candidates, StateTracker.get_last_sig(task))
+            idx = _pick_constraint_guided_click_index(
+                candidates, state.constraints, prompt, state.task_type, StateTracker.get_last_click_selector_value(task)
+            )
+            if idx is None:
+                idx = _pick_non_repeating_click_index(candidates, StateTracker.get_last_sig(task))
             decision = {"action": "click", "candidate_id": idx if idx is not None else 0}
         elif _history_has_recent_timeout(history) and candidates:
-            idx = _pick_non_repeating_click_index(candidates, StateTracker.get_last_sig(task))
+            idx = _pick_constraint_guided_click_index(
+                candidates, state.constraints, prompt, state.task_type, StateTracker.get_last_click_selector_value(task)
+            )
+            if idx is None:
+                idx = _pick_non_repeating_click_index(candidates, StateTracker.get_last_sig(task))
             if idx is not None:
                 decision = {"action": "click", "candidate_id": idx}
 
